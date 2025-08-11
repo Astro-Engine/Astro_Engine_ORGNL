@@ -19,6 +19,7 @@ try:
     from .engine.routes.KpNew import kp
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
+    from .engine.routes.WesternType import ws
     
     # Import performance enhancements
     from .cache_manager import create_cache_manager
@@ -30,6 +31,7 @@ except ImportError:
     from .engine.routes.KpNew import kp
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
+    from astro_engine.engine.routes.WesternType import ws
     
     # Import performance enhancements
     from .cache_manager import create_cache_manager
@@ -108,6 +110,7 @@ def create_app():
     app.register_blueprint(kp)  # KP System routes
     app.register_blueprint(bp)  # Lahiri Ayanamsa routes
     app.register_blueprint(rl)  # Raman Ayanamsa routes
+    app.register_blueprint(ws)  # western Ayanamsa routes
     
     # Health check endpoint
     @app.route('/health')

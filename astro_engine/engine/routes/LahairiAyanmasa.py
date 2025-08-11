@@ -1,8 +1,11 @@
+from asyncio.log import logger
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 # from venv import logger
 import swisseph as swe
+
+
 
 swe.set_ephe_path('astro_api/ephe')
 
@@ -36,7 +39,6 @@ from astro_engine.engine.lagnaCharts.LahiriKarkamshaD9 import lahiri_karkamsha_D
 from astro_engine.engine.lagnaCharts.Sripathi import calculate_ascendant_sri, get_nakshatra_pada_sri, get_planet_data_sri
 from astro_engine.engine.natalCharts.natal import lahairi_natal,  longitude_to_sign, format_dms
 from astro_engine.engine.natalCharts.transit import  lahairi_tranist
-from astro_engine.engine.numerology.CompositeChart import  lahairi_composite
 from astro_engine.engine.numerology.LoShuGridNumerology import calculate_lo_shu_grid
 from astro_engine.engine.ashatakavargha.Binnastakavargha import  lahiri_binnastakavargha
 from astro_engine.engine.numerology.NumerologyData import calculate_chaldean_numbers, calculate_date_numerology, get_sun_sign, get_element_from_number, get_sun_sign_element, get_elemental_compatibility, personal_interpretations, business_interpretations, ruling_planets, planet_insights, sun_sign_insights, number_colors, number_gemstones, planet_days
@@ -46,8 +48,6 @@ from astro_engine.engine.divisionalCharts.VimshamshaD20 import  lahairi_Vimshams
 from astro_engine.engine.natalCharts.SudharashanaChakara import calculate_sidereal_positions, generate_chart, get_sign
 from astro_engine.engine.natalCharts.SunChart import  lahrir_sun_chart,  validate_input_sun
 from astro_engine.engine.natalCharts.MoonChart import  lahairi_moon_chart, validate_input
-from astro_engine.engine.numerology.ProgressChart import  lahairi_progress
-from astro_engine.engine.numerology.SynatryChart import analyze_house_overlays, calculate_aspects,  evaluate_nodal_connections, interpret_synastry, lahairi_synastry, validate_person_data
 
 # Import caching decorators
 try:
@@ -340,9 +340,46 @@ def calculate_sudarshan_chakra():
 
 # Hora (D-2)
 
+# @bp.route('/lahiri/calculate_d2_hora', methods=['POST'])
+# def calculate_d2_hora():
+#     """API endpoint to calculate the D2 Hora chart."""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"error": "No JSON data provided"}), 400
+
+#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+#         if not all(field in data for field in required_fields):
+#             return jsonify({"error": "Missing required fields"}), 400
+
+#         user_name = data.get('user_name', 'Unknown')
+#         birth_date = data['birth_date']
+#         birth_time = data['birth_time']
+#         latitude = float(data['latitude'])
+#         longitude = float(data['longitude'])
+#         tz_offset = float(data['timezone_offset'])
+
+#         # Call the calculation function
+#         result = lahairi_hora_chart(birth_date, birth_time, latitude, longitude, tz_offset)
+#         response = {
+#             'user_name': user_name,
+#             'd2_hora_chart': result,
+#             'metadata': {
+#                 'ayanamsa': 'Lahiri',
+#                 'house_system': 'Whole Sign',
+#                 'calculation_time': datetime.utcnow().isoformat(),
+#                 'input': data
+#             }
+#         }
+#         return jsonify(response), 200
+
+#     except Exception as e:
+#         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
+
+
 @bp.route('/lahiri/calculate_d2_hora', methods=['POST'])
 def calculate_d2_hora():
-    """API endpoint to calculate the D2 Hora chart."""
+    """API endpoint to calculate the D2 Hora chart in natal-style response."""
     try:
         data = request.get_json()
         if not data:
@@ -352,23 +389,38 @@ def calculate_d2_hora():
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
 
-        user_name = data.get('user_name', 'Unknown')
+        user_name = data.get('user_name', '')
+
         birth_date = data['birth_date']
         birth_time = data['birth_time']
         latitude = float(data['latitude'])
         longitude = float(data['longitude'])
         tz_offset = float(data['timezone_offset'])
 
-        # Call the calculation function
+        # Call calculation
         result = lahairi_hora_chart(birth_date, birth_time, latitude, longitude, tz_offset)
+
+        # Wrap calculation for natal-style response
         response = {
-            'user_name': user_name,
-            'd2_hora_chart': result,
-            'metadata': {
-                'ayanamsa': 'Lahiri',
-                'house_system': 'Whole Sign',
-                'calculation_time': datetime.utcnow().isoformat(),
-                'input': data
+            "user_name": user_name,
+            "birth_details": {
+                "birth_date": birth_date,
+                "birth_time": birth_time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": tz_offset
+            },
+            "planetary_positions": result.get("planets", {}),  # rename 'planets' to 'planetary_positions'
+            "ascendant": {
+                "sign": result["ascendant"].get("d2_sign", ""),
+                "degrees": str(round(result["ascendant"].get("d2_degree", 0), 2)),
+                "nakshatra": result["ascendant"].get("nakshatra", ""),
+                "pada": result["ascendant"].get("pada", "")
+            },
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "chart_type": "Hora (D2)",
+                "house_system": "Whole Sign"
             }
         }
         return jsonify(response), 200
@@ -377,13 +429,15 @@ def calculate_d2_hora():
         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
 
 
+
+
 # Dreshkana (D-3)
 
-@bp.route('/lahiri/calculate_d3', methods=['POST'])
 @cache_calculation('d3_chart', ttl=86400)  # 24 hour cache
 @metrics_decorator('d3_chart')
+@bp.route('/lahiri/calculate_d3', methods=['POST'])
 def calculate_d3_chart_endpoint():
-    """API endpoint to calculate D3 chart with retrograde status, nakshatras, and padas."""
+    """API endpoint to calculate D3 chart with structured response like natal chart."""
     try:
         data = request.get_json()
         if not data:
@@ -393,19 +447,50 @@ def calculate_d3_chart_endpoint():
         if not all(key in data for key in required):
             return jsonify({"error": "Missing required fields"}), 400
 
-        birth_date = data['birth_date']
-        birth_time = data['birth_time']
+        user_name = data.get('user_name', '')
+
         latitude = float(data['latitude'])
         longitude = float(data['longitude'])
-        tz_offset = float(data['timezone_offset'])
+        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+            return jsonify({"error": "Invalid latitude or longitude"}), 400
 
-        d3_data = lahairi_drerkhana(birth_date, birth_time, latitude, longitude, tz_offset)
-        return jsonify(d3_data), 200
+        # --- Use the updated function ---
+        d3_data = lahairi_drerkhana(
+            data['birth_date'],
+            data['birth_time'],
+            latitude,
+            longitude,
+            float(data['timezone_offset'])
+        )
 
+        # Assemble notes block
+        notes = {
+            "ayanamsa": "Lahiri",
+            "ayanamsa_value": f"{d3_data['ayanamsa_value']:.6f}",
+            "chart_type": "D3 (Drerkhana)",
+            "house_system": "Whole Sign"
+        }
+
+        response = {
+            "user_name": user_name,
+            "birth_details": {
+                "birth_date": data['birth_date'],
+                "birth_time": data['birth_time'],
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": float(data['timezone_offset'])
+            },
+            "planetary_positions": d3_data["planetary_positions"],
+            "ascendant": d3_data["ascendant"],
+            "notes": notes
+        }
+        return jsonify(response), 200
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
     except Exception as e:
-        logging.error(f"Error in D3 chart calculation: {str(e)}")
+        logger.error(f"Error in D3 chart calculation: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
-
 
 
 # Chaturthamsha (D-4)
@@ -436,9 +521,10 @@ def calculate_d4():
 
 
 # Saptamsha (D-7)
+
 @bp.route('/lahiri/calculate_d7_chart', methods=['POST'])
 def calculate_d7_chart_endpoint():
-    """API endpoint to calculate D7 chart from birth details."""
+    """API endpoint to calculate D7 chart from birth details in natal-style response."""
     try:
         data = request.get_json()
         if not data:
@@ -447,6 +533,8 @@ def calculate_d7_chart_endpoint():
         required = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
         if not all(key in data for key in required):
             return jsonify({"error": "Missing required fields"}), 400
+
+        user_name = data.get('user_name', '')
 
         birth_date = data['birth_date']
         birth_time = data['birth_time']
@@ -457,16 +545,36 @@ def calculate_d7_chart_endpoint():
         # Calculate D7 chart using lahairi_saptamsha
         d7_data = lahairi_saptamsha(birth_date, birth_time, latitude, longitude, tz_offset)
 
-        # Prepare response
+        # Prepare natal-style response
         response = {
-            "ascendant": d7_data['Ascendant'],
-            "planets": {planet: d7_data[planet] for planet in PLANET_NAMES}
+            "user_name": user_name,
+            "birth_details": {
+                "birth_date": birth_date,
+                "birth_time": birth_time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": tz_offset
+            },
+            "planetary_positions": {planet: d7_data[planet] for planet in PLANET_NAMES},
+            "ascendant": {
+                "sign": d7_data["Ascendant"].get("sign", ""),
+                "degrees": str(d7_data["Ascendant"].get("degrees", "")),
+                "nakshatra": d7_data["Ascendant"].get("nakshatra", ""),
+                "pada": d7_data["Ascendant"].get("pada", "")
+            },
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "chart_type": "Saptamsa (D7)",
+                "house_system": "Whole Sign"
+            }
         }
         return jsonify(response), 200
 
     except Exception as e:
-        logging.error(f"Error in D7 calculation: {str(e)}")
+        logger.error(f"Error in D7 calculation: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
 
 
 
@@ -665,6 +773,13 @@ def calculate_d27_chart():
         longitude = float(data['longitude'])
         tz_offset = float(data['timezone_offset'])
 
+        def format_dms(degrees):
+            """Format degrees as DMS (degrees, minutes, seconds)."""
+            deg = int(degrees)
+            minutes = int((degrees - deg) * 60)
+            seconds = int(((degrees - deg) * 60 - minutes) * 60)
+            return f"{deg}°{minutes:02d}'{seconds:02d}\""
+
         jd_utc = d27_get_julian_day_utc(birth_date, birth_time, tz_offset)
         natal_asc_lon = d27_calculate_ascendant(jd_utc, latitude, longitude)
         d27_asc_lon = d27_calculate_longitude(natal_asc_lon)
@@ -689,54 +804,53 @@ def calculate_d27_chart():
             natal_planet_lons[planet] = lon
             natal_planet_retro[planet] = retro
 
-        d27_chart = {}
-
-        # Ascendant
+        # Format ascendant
         asc_nak, asc_lord, asc_pada = d27_get_nakshatra_pada(d27_asc_lon)
-        natal_asc_nak, natal_asc_lord, natal_asc_pada = d27_get_nakshatra_pada(natal_asc_lon)
-        d27_chart["Ascendant"] = {
-            "d27_sign": ZODIAC_SIGNS_d27[d27_asc_sign_index],
-            "degrees": round(d27_asc_deg, 4),
-            "house": 1,
-            "d27_nakshatra": asc_nak,
-            "d27_nakshatra_lord": asc_lord,
-            "d27_pada": asc_pada,
-            # "natal_sign": ZODIAC_SIGNS_d27[d27_get_sign_index(natal_asc_lon)],
-            # "natal_nakshatra": natal_asc_nak,
-            # "natal_nakshatra_lord": natal_asc_lord,
-            # "natal_pada": natal_asc_pada,
-            "retrograde": False
+        ascendant_json = {
+            "sign": ZODIAC_SIGNS_d27[d27_asc_sign_index],
+            "degrees": format_dms(d27_asc_deg),
+            "nakshatra": asc_nak,
+            "pada": asc_pada
         }
 
+        # Format planetary positions
+        planetary_positions_json = {}
         for planet in list(PLANET_CODES.keys()) + ["Ketu"]:
             natal_lon = natal_planet_lons[planet]
             d27_lon = d27_calculate_longitude(natal_lon)
             d27_sign_index = d27_get_sign_index(d27_lon)
             d27_deg = d27_lon % 30
             house = d27_calculate_house(d27_asc_sign_index, d27_sign_index)
-            natal_sign = ZODIAC_SIGNS_d27[d27_get_sign_index(natal_lon)]
             retro = natal_planet_retro[planet]
-
             d27_nakshatra, d27_nak_lord, d27_pada = d27_get_nakshatra_pada(d27_lon)
-            natal_nakshatra, natal_nak_lord, natal_pada = d27_get_nakshatra_pada(natal_lon)
 
-            d27_chart[planet] = {
-                "d27_sign": ZODIAC_SIGNS_d27[d27_sign_index],
-                "degrees": round(d27_deg, 4),
+            planetary_positions_json[planet] = {
+                "sign": ZODIAC_SIGNS_d27[d27_sign_index],
+                "degrees": format_dms(d27_deg),
+                "retrograde": retro,
                 "house": house,
-                "d27_nakshatra": d27_nakshatra,
-                "d27_nakshatra_lord": d27_nak_lord,
-                "d27_pada": d27_pada,
-                # "natal_sign": natal_sign,
-                # "natal_nakshatra": natal_nakshatra,
-                # "natal_nakshatra_lord": natal_nak_lord,
-                # "natal_pada": natal_pada,
-                # "retrograde": retro
+                "nakshatra": d27_nakshatra,
+                "pada": d27_pada
             }
 
+        # Construct response
         response = {
             "user_name": user_name,
-            "d27_chart": d27_chart
+            "birth_details": {
+                "birth_date": birth_date,
+                "birth_time": birth_time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": tz_offset
+            },
+            "planetary_positions": planetary_positions_json,
+            "ascendant": ascendant_json,
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": "N/A",  # Update if ayanamsa value is available
+                "chart_type": "D27",
+                "house_system": "Whole Sign"
+            }
         }
         return jsonify(response), 200
 
@@ -764,16 +878,102 @@ def calculate_d30_chart():
 
         birth_date = data['birth_date']
         birth_time = data['birth_time']
-        latitude = data['latitude']
-        longitude = data['longitude']
+        latitude = float(data['latitude'])
+        longitude = float(data['longitude'])
         tz_offset = float(data['timezone_offset'])
 
+        def format_dms(degrees):
+            """Format degrees as DMS (degrees, minutes, seconds)."""
+            deg = int(degrees)
+            minutes = int((degrees - deg) * 60)
+            seconds = int(((degrees - deg) * 60 - minutes) * 60)
+            return f"{deg}°{minutes:02d}'{seconds:02d}\""
+
+        # Assume ZODIAC_SIGNS_d30 is defined similarly to ZODIAC_SIGNS_d27
+        ZODIAC_SIGNS_d30 = [
+            "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+            "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+        ]
+
+        # Perform D30 calculations (unchanged)
         natal_positions, d30_positions = lahiri_trimshamsha_D30(birth_date, birth_time, latitude, longitude, tz_offset)
 
+        # Helper function to get sign index (assuming d27_get_sign_index is available)
+        def get_sign_index(longitude_or_sign):
+            if isinstance(longitude_or_sign, (int, float)):
+                return int(longitude_or_sign // 30) % 12
+            try:
+                return ZODIAC_SIGNS_d30.index(longitude_or_sign.capitalize())
+            except ValueError:
+                return 0  # Default to Aries
+
+        # Helper function to calculate house (assuming d27_calculate_house is available)
+        def calculate_house(asc_sign_index, planet_sign_index):
+            return ((planet_sign_index - asc_sign_index) % 12) + 1
+
+        # Helper function for nakshatra and pada (assuming d27_get_nakshatra_pada is available)
+        def get_nakshatra_pada(longitude):
+            # Placeholder: Replace with actual nakshatra calculation if not provided
+            return "Unknown", "Unknown", 1
+
+        # Format ascendant
+        asc_data = d30_positions.get("Ascendant", {})
+        asc_sign = asc_data.get("sign") or ZODIAC_SIGNS_d30[get_sign_index(asc_data.get("longitude", 0))]
+        asc_deg = asc_data.get("longitude", 0) % 30 if isinstance(asc_data.get("longitude"), (int, float)) else 0
+        asc_nak = asc_data.get("nakshatra", "Unknown")
+        asc_pada = asc_data.get("pada", 1)
+        if asc_nak == "Unknown":
+            asc_nak, asc_lord, asc_pada = get_nakshatra_pada(asc_data.get("longitude", 0))
+        ascendant_json = {
+            "sign": asc_sign,
+            "degrees": format_dms(asc_deg),
+            "nakshatra": asc_nak,
+            "pada": asc_pada
+        }
+        asc_sign_index = get_sign_index(asc_sign)
+
+        # Format planetary positions
+        planetary_positions_json = {}
+        for planet in d30_positions:
+            if planet == "Ascendant":
+                continue
+            planet_data = d30_positions[planet]
+            planet_sign = planet_data.get("sign") or ZODIAC_SIGNS_d30[get_sign_index(planet_data.get("longitude", 0))]
+            planet_deg = planet_data.get("longitude", 0) % 30 if isinstance(planet_data.get("longitude"), (int, float)) else 0
+            house = calculate_house(asc_sign_index, get_sign_index(planet_sign))
+            retro = planet_data.get("retrograde", False)
+            nakshatra = planet_data.get("nakshatra", "Unknown")
+            pada = planet_data.get("pada", 1)
+            if nakshatra == "Unknown":
+                nakshatra, nak_lord, pada = get_nakshatra_pada(planet_data.get("longitude", 0))
+
+            planetary_positions_json[planet] = {
+                "sign": planet_sign,
+                "degrees": format_dms(planet_deg),
+                "retrograde": retro,
+                "house": house,
+                "nakshatra": nakshatra,
+                "pada": pada
+            }
+
+        # Construct response
         response = {
             "user_name": data.get('user_name', 'Unknown'),
-            "natal_positions": {p: natal_positions[p]['longitude'] for p in natal_positions},
-            "d30_chart": d30_positions
+            "birth_details": {
+                "birth_date": birth_date,
+                "birth_time": birth_time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": tz_offset
+            },
+            "planetary_positions": planetary_positions_json,
+            "ascendant": ascendant_json,
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": "N/A",  # Update if available
+                "chart_type": "D30",
+                "house_system": "Whole Sign"
+            }
         }
         return jsonify(response), 200
 
@@ -1112,6 +1312,42 @@ def calculate_equal_bhava_lagna():
 # Arudha lagna
 
 @bp.route('/lahiri/calculate_arudha_lagna', methods=['POST'])
+# def calculate_arudha_lagna():
+#     """API endpoint to calculate Arudha Lagna chart with retrograde, nakshatras, and padas."""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"error": "No JSON data provided"}), 400
+
+#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+#         if not all(field in data for field in required_fields):
+#             return jsonify({"error": "Missing required fields"}), 400
+
+#         user_name = data.get('user_name', 'Unknown')
+#         birth_date = data['birth_date']
+#         birth_time = data['birth_time']
+#         latitude = float(data['latitude'])
+#         longitude = float(data['longitude'])
+#         tz_offset = float(data['timezone_offset'])
+
+#         # Call the calculation function
+#         result = lahairi_arudha_lagna(birth_date, birth_time, latitude, longitude, tz_offset)
+#         response = {
+#             'user_name': user_name,
+#             'arudha_lagna': result['arudha_lagna'],
+#             'planets': result['planets'],
+#             'metadata': {
+#                 'ayanamsa': 'Lahiri',
+#                 'calculation_time': datetime.utcnow().isoformat(),
+#                 'input': data
+#             }
+#         }
+#         return jsonify(response), 200
+
+#     except Exception as e:
+#         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
+
+
 def calculate_arudha_lagna():
     """API endpoint to calculate Arudha Lagna chart with retrograde, nakshatras, and padas."""
     try:
@@ -1130,22 +1366,32 @@ def calculate_arudha_lagna():
         longitude = float(data['longitude'])
         tz_offset = float(data['timezone_offset'])
 
-        # Call the calculation function
+        # Compute chart data
         result = lahairi_arudha_lagna(birth_date, birth_time, latitude, longitude, tz_offset)
+
         response = {
-            'user_name': user_name,
-            'arudha_lagna': result['arudha_lagna'],
-            'planets': result['planets'],
-            'metadata': {
-                'ayanamsa': 'Lahiri',
-                'calculation_time': datetime.utcnow().isoformat(),
-                'input': data
-            }
+            "ascendant": result["ascendant"],
+            "birth_details": {
+                "birth_date": birth_date,
+                "birth_time": birth_time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone_offset": tz_offset
+            },
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": "",  # You may add real value if you want, else leave as empty string
+                "chart_type": "Rasi",
+                "house_system": "Whole Sign"
+            },
+            "planetary_positions": result["planetary_positions"],
+            "user_name": user_name
         }
         return jsonify(response), 200
 
     except Exception as e:
         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
+
 
 
 # Karkamsha Birth chart 
@@ -1292,155 +1538,120 @@ def lahiri_hora_calculate_hora_lagna_chart():
 
 # Synastry
 
-@bp.route('/lahiri/synastry', methods=['POST'])
-def synastry():
-    data = request.get_json()
-    if not data or 'person_a' not in data or 'person_b' not in data:
-        return jsonify({'error': 'Both person_a and person_b must be provided'}), 400
+# @bp.route('/lahiri/synastry', methods=['POST'])
+# def synastry():
+#     data = request.get_json()
+#     if not data or 'person_a' not in data or 'person_b' not in data:
+#         return jsonify({'error': 'Both person_a and person_b must be provided'}), 400
 
-    valid_a, error_a = validate_person_data(data['person_a'], 'person_a')
-    if not valid_a:
-        return jsonify({'error': error_a}), 400
-    valid_b, error_b = validate_person_data(data['person_b'], 'person_b')
-    if not valid_b:
-        return jsonify({'error': error_b}), 400
+#     valid_a, error_a = validate_person_data(data['person_a'], 'person_a')
+#     if not valid_a:
+#         return jsonify({'error': error_a}), 400
+#     valid_b, error_b = validate_person_data(data['person_b'], 'person_b')
+#     if not valid_b:
+#         return jsonify({'error': error_b}), 400
 
-    try:
-        # Calculate chart data for both persons
-        chart_a = lahairi_synastry(data['person_a'])
-        chart_b = lahairi_synastry(data['person_b'])
+#     try:
+#         # Calculate chart data for both persons
+#         chart_a = lahairi_synastry(data['person_a'])
+#         chart_b = lahairi_synastry(data['person_b'])
 
-        # Prepare positions with ascendant for aspects
-        pos_a_with_asc = {**chart_a['positions'], 'Ascendant': chart_a['ascendant']}
-        pos_b_with_asc = {**chart_b['positions'], 'Ascendant': chart_b['ascendant']}
+#         # Prepare positions with ascendant for aspects
+#         pos_a_with_asc = {**chart_a['positions'], 'Ascendant': chart_a['ascendant']}
+#         pos_b_with_asc = {**chart_b['positions'], 'Ascendant': chart_b['ascendant']}
 
-        # Synastry analysis
-        aspects = calculate_aspects(pos_a_with_asc, pos_b_with_asc)
-        overlays_a_in_b = analyze_house_overlays(chart_a['positions'], chart_b['asc_sign_idx'])
-        overlays_b_in_a = analyze_house_overlays(chart_b['positions'], chart_a['asc_sign_idx'])
-        nodal_a = evaluate_nodal_connections(chart_a['positions'], chart_b['positions'])
-        nodal_b = evaluate_nodal_connections(chart_b['positions'], chart_a['positions'])
-        interpretation = interpret_synastry(aspects, overlays_a_in_b, overlays_b_in_a, nodal_a, nodal_b)
+#         # Synastry analysis
+#         aspects = calculate_aspects(pos_a_with_asc, pos_b_with_asc)
+#         overlays_a_in_b = analyze_house_overlays(chart_a['positions'], chart_b['asc_sign_idx'])
+#         overlays_b_in_a = analyze_house_overlays(chart_b['positions'], chart_a['asc_sign_idx'])
+#         nodal_a = evaluate_nodal_connections(chart_a['positions'], chart_b['positions'])
+#         nodal_b = evaluate_nodal_connections(chart_b['positions'], chart_a['positions'])
+#         interpretation = interpret_synastry(aspects, overlays_a_in_b, overlays_b_in_a, nodal_a, nodal_b)
 
-        # Response
-        response = {
-            'person_a': {
-                'name': chart_a['name'],
-                'birth_details': data['person_a'],
-                'ascendant': {
-                    'sign': chart_a['ascendant']['sign'],
-                    'degree': chart_a['ascendant']['degree']
-                },
-                'planets': {k: {**v, 'house': chart_a['houses'][k]} for k, v in chart_a['positions'].items()}
-            },
-            'person_b': {
-                'name': chart_b['name'],
-                'birth_details': data['person_b'],
-                'ascendant': {
-                    'sign': chart_b['ascendant']['sign'],
-                    'degree': chart_b['ascendant']['degree']
-                },
-                'planets': {k: {**v, 'house': chart_b['houses'][k]} for k, v in chart_b['positions'].items()}
-            },
-            'synastry': {
-                'aspects': aspects,
-                'house_overlays': {'a_in_b': overlays_a_in_b, 'b_in_a': overlays_b_in_a},
-                'nodal_connections': {'person_a': nodal_a, 'person_b': nodal_b},
-                'interpretation': interpretation
-            }
-        }
-        return jsonify(response), 200
-    except Exception as e:
-        logging.error(f"Error in synastry calculation: {str(e)}")
-        return jsonify({'error': str(e)}), 400
-
-
+#         # Response
+#         response = {
+#             'person_a': {
+#                 'name': chart_a['name'],
+#                 'birth_details': data['person_a'],
+#                 'ascendant': {
+#                     'sign': chart_a['ascendant']['sign'],
+#                     'degree': chart_a['ascendant']['degree']
+#                 },
+#                 'planets': {k: {**v, 'house': chart_a['houses'][k]} for k, v in chart_a['positions'].items()}
+#             },
+#             'person_b': {
+#                 'name': chart_b['name'],
+#                 'birth_details': data['person_b'],
+#                 'ascendant': {
+#                     'sign': chart_b['ascendant']['sign'],
+#                     'degree': chart_b['ascendant']['degree']
+#                 },
+#                 'planets': {k: {**v, 'house': chart_b['houses'][k]} for k, v in chart_b['positions'].items()}
+#             },
+#             'synastry': {
+#                 'aspects': aspects,
+#                 'house_overlays': {'a_in_b': overlays_a_in_b, 'b_in_a': overlays_b_in_a},
+#                 'nodal_connections': {'person_a': nodal_a, 'person_b': nodal_b},
+#                 'interpretation': interpretation
+#             }
+#         }
+#         return jsonify(response), 200
+#     except Exception as e:
+#         logging.error(f"Error in synastry calculation: {str(e)}")
+#         return jsonify({'error': str(e)}), 400
 
 
+# @bp.route('/synastry', methods=['POST'])
+# def synastry_endpoint():
+#     data = request.get_json()
+#     if not data or 'person_a' not in data or 'person_b' not in data:
+#         return jsonify({'error': 'Both person_a and person_b must be provided'}), 400
 
-
-
-# Composite Chart
-
-@bp.route('/lahiri/composite', methods=['POST'])
-def composite_chart():
-    data = request.get_json()
-    if not data or 'person_a' not in data or 'person_b' not in data:
-        return jsonify({'error': 'Both person_a and person_b must be provided'}), 400
-
-    valid_a, error_a = validate_person_data(data['person_a'], 'person_a')
-    if not valid_a:
-        return jsonify({'error': error_a}), 400
-    valid_b, error_b = validate_person_data(data['person_b'], 'person_b')
-    if not valid_b:
-        return jsonify({'error': error_b}), 400
-
-    try:
-        # Extract names
-        name_a = data['person_a'].get('name', 'Person A')
-        name_b = data['person_b'].get('name', 'Person B')
-
-        # Calculate composite chart
-        result = lahairi_composite(data['person_a'], data['person_b'])
-
-        # Construct response
-        response = {
-            'person_a': {
-                'name': name_a,
-                'natal': result['natal_a']
-            },
-            'person_b': {
-                'name': name_b,
-                'natal': result['natal_b']
-            },
-            'composite': result['composite']
-        }
-        return jsonify(response), 200
-    except Exception as e:
-        logging.error(f"Error in composite chart calculation: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+#     try:
+#         response = synastry(data['person_a'], data['person_b'])
+#         return jsonify(response), 200
+#     except Exception as e:
+#         logger.error(f"Error in synastry calculation: {str(e)}")
+#         return jsonify({'error': str(e)}), 400
 
 
 
 
-# Progressed Chart
 
-@bp.route('/lahiri/progressed', methods=['POST'])
-def progressed_chart():
-    """API endpoint to calculate the progressed chart."""
-    data = request.get_json()
-    
-    # Validate input
-    required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset', 'age']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
-    
-    try:
-        birth_date = data['birth_date']
-        birth_time = data['birth_time']
-        latitude = float(data['latitude'])
-        longitude = float(data['longitude'])
-        timezone_offset = float(data['timezone_offset'])
-        age = float(data['age'])
-        
-        # Calculate progressed chart data using lahairi_composite
-        result = lahairi_progress(birth_date, birth_time, latitude, longitude, timezone_offset, age)
-        
-        # Construct response
-        response = {
-            'progressed_planets': result['prog_positions'],
-            'progressed_ascendant': result['prog_asc'],
-            'progressed_midheaven': result['prog_mc'],
-            'house_cusps': result['house_cusps'],
-            'interpretations': result['interpretations']
-        }
-        return jsonify(response), 200
-    
-    except ValueError as e:
-        return jsonify({'error': f'Invalid input data: {str(e)}'}), 400
-    except Exception as e:
-        return jsonify({'error': f'Calculation failed: {str(e)}'}), 500
+# # Composite Chart
+
+# @bp.route('/composite', methods=['POST'])
+# def composite_chart():
+#     data = request.get_json()
+#     if not data or 'person_a' not in data or 'person_b' not in data:
+#         return jsonify({'error': 'Both person_a and person_b must be provided'}), 400
+
+#     try:
+#         reference_date = data.get('reference_date')
+#         reference_time = data.get('reference_time')
+#         response = composite(data['person_a'], data['person_b'], reference_date, reference_time)
+#         return jsonify(response), 200
+#     except Exception as e:
+#         logger.error(f"Error in composite chart calculation: {str(e)}")
+#         return jsonify({'error': str(e)}), 400
+
+
+
+# # Progressed Chart
+
+# @bp.route('/lahiri/progressed', methods=['POST'])
+# def progressed_chart():
+#     data = request.get_json()
+#     if not data or 'person' not in data:
+#         return jsonify({'error': 'Person data must be provided'}), 400
+
+#     try:
+#         response = progressed(data['person'])
+#         return jsonify(response), 200
+#     except Exception as e:
+#         logger.error(f"Error in progressed chart calculation: {str(e)}")
+#         return jsonify({'error': str(e)}), 400
+
 
 
 
