@@ -47,3 +47,5 @@ images:
   - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine'
 
   
+options:
+  logging: CLOUD_LOGGING_ONLY
