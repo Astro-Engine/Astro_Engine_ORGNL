@@ -39,35 +39,41 @@ steps:
     args:
       [
         'build',
-        '-t', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
-        '-f', 'Dockerfile', # explicitly use Dockerfile path
+        '-t',
+        'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine',
         '.'
       ]
 
-  # Step 2: Push image to Artifact Registry
+  # Step 2: Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'push',
-        'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+        'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine'
       ]
 
   # Step 3: Deploy to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
     args:
       [
-        'run', 'deploy', 'astro-engine',
-        '--image', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
-        '--region', 'asia-south1',
-        '--platform', 'managed',
-        '--allow-unauthenticated'
+        'run',
+        'deploy',
+        'astro-engine',
+        '--image',
+        'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine',
+        '--region',
+        'asia-south1',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated',
+        '--memory',
+        '512Mi',
+        '--timeout',
+        '3000'
       ]
 
 images:
-  - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-
+  - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine'
 
   
