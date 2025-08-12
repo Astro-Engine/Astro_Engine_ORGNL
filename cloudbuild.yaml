@@ -1,34 +1,31 @@
 steps:
-  # 1. Build the Docker image
+  # Step 1: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - build
-      - '-t'
-      - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine:$COMMIT_SHA'
-      - '.'
+    args: [
+      'build',
+      '-t', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+      '.'
+    ]
 
-  # 2. Push the Docker image to Artifact Registry
+  # Step 2: Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - push
-      - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine:$COMMIT_SHA'
+    args: [
+      'push',
+      'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+    ]
 
-  # 3. Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - run
-      - deploy
-      - astro-engine
-      - '--image=asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine:$COMMIT_SHA'
-      - '--region=asia-south1'
-      - '--platform=managed'
-      - '--memory=512Mi'
-      - '--cpu=1'
-      - '--max-instances=10'
-      - '--timeout=3000'
-      - '--port=8080'
-      - '--allow-unauthenticated'
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'run', 'deploy', 'astro-engine',
+      '--image', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+      '--region', 'asia-south1',
+      '--platform', 'managed',
+      '--allow-unauthenticated'
+    ]
 
 images:
-  - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/engine-astro/astro_engine-astro-engine:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
