@@ -30,7 +30,7 @@ RUN useradd --create-home --shell /bin/bash astro && \
 
 # Copy application code
 COPY astro_engine /app/astro_engine
-COPY .env.production /app/.env
+# COPY .env.production /app/.env
 
 # Create necessary directories
 RUN mkdir -p /app/logs && \
