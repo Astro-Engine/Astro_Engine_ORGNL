@@ -1169,7 +1169,7 @@ def calculate_sripathi_bhava():
                 "nakshatra": asc_nakshatra,
                 "pada": asc_pada
             },
-            "planets": natal_positions
+            "planetary_positions": natal_positions
         }
         # logger.debug(f"Output JSON: {response}")
         return jsonify(response), 200
