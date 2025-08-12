@@ -243,7 +243,7 @@ def lahairi_kp_bava(birth_date, birth_time, latitude, longitude, tz_offset, user
     response = {
         'user_name': user_name,
         'lagna_sign': lagna_sign,
-        # 'house_cusps': cusp_details,
+        'house_cusps': cusp_details,
         'planetary_positions': planet_details,
         # 'significators': significators
     }
