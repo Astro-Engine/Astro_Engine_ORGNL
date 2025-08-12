@@ -159,7 +159,7 @@ ultimate_validation_report.json
 htmlcov/
 
 # Production secrets
-# .env.production
+.env.production
 secrets/
 *.key
 *.pem
