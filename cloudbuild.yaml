@@ -1,31 +1,73 @@
+# steps:
+#   # Step 1: Build Docker image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: [
+#       'build',
+#       '-t', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+#       '.'
+#     ]
+
+#   # Step 2: Push image to Artifact Registry
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: [
+#       'push',
+#       'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+#     ]
+
+#   # Step 3: Deploy to Cloud Run
+#   - name: 'gcr.io/cloud-builders/gcloud'
+#     args: [
+#       'run', 'deploy', 'astro-engine',
+#       '--image', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+#       '--region', 'asia-south1',
+#       '--platform', 'managed',
+#       '--allow-unauthenticated'
+#     ]
+
+# images:
+#   - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+
+# options:
+#   logging: CLOUD_LOGGING_ONLY
+
+
+
+
 steps:
   # Step 1: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
-      '.'
-    ]
+    args:
+      [
+        'build',
+        '-t', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+        '-f', 'Dockerfile', # explicitly use Dockerfile path
+        '.'
+      ]
 
   # Step 2: Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'push',
-      'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
-    ]
+    args:
+      [
+        'push',
+        'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
+      ]
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: [
-      'run', 'deploy', 'astro-engine',
-      '--image', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
-      '--region', 'asia-south1',
-      '--platform', 'managed',
-      '--allow-unauthenticated'
-    ]
+    args:
+      [
+        'run', 'deploy', 'astro-engine',
+        '--image', 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest',
+        '--region', 'asia-south1',
+        '--platform', 'managed',
+        '--allow-unauthenticated'
+      ]
 
 images:
   - 'asia-south1-docker.pkg.dev/handy-bindery-463821-n4/astro-engine/astro-engine:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+
+  
