@@ -163,3 +163,10 @@ htmlcov/
 secrets/
 *.key
 *.pem
+
+# API Keys (Phase 1, Module 1.3)
+# NEVER commit these files - they contain actual API keys
+API_KEYS_SECURE.md
+api_keys_*.txt
+.api_keys
+GENERATED_KEYS.md

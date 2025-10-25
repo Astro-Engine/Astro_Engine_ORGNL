@@ -1,0 +1,189 @@
+#
+# DigitalOcean App Platform Specification for Astro Engine
+# Production-ready configuration with auto-scaling and managed Redis
+#
+# Deploy with: doctl apps create --spec .do/app.yaml
+# Update with: doctl apps update <app-id> --spec .do/app.yaml
+#
+
+name: astro-engine
+region: blr  # Bangalore, India (closest to your target users)
+
+# Main API Service
+services:
+  - name: api
+    # GitHub integration for auto-deploy
+    github:
+      repo: Project-Corp-Astro/Astro_Engine
+      branch: main
+      deploy_on_push: true
+
+    # Build from Dockerfile
+    dockerfile_path: Dockerfile
+
+    # Application configuration
+    http_port: 5000
+
+    # Instance sizing - Professional XS (2GB RAM, 1 vCPU)
+    # Recommended for production Vedic astrology calculations
+    instance_size_slug: professional-xs
+    instance_count: 1
+
+    # Auto-scaling configuration
+    autoscaling:
+      min_instance_count: 1
+      max_instance_count: 5
+      metrics:
+        cpu:
+          percent: 70  # Scale up when CPU > 70%
+
+    # Health check configuration
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Environment variables
+    envs:
+      # Flask configuration
+      - key: FLASK_ENV
+        value: "production"
+
+      - key: FLASK_DEBUG
+        value: "false"
+
+      - key: HOST
+        value: "0.0.0.0"
+
+      - key: PORT
+        value: "5000"
+
+      - key: WORKERS
+        value: "4"
+
+      - key: TIMEOUT
+        value: "120"
+
+      # Application paths
+      - key: PYTHONPATH
+        value: "/app"
+
+      - key: EPHEMERIS_PATH
+        value: "/app/astro_engine/ephe"
+
+      - key: EPHEMERIS_CACHE_SIZE
+        value: "1000"
+
+      # CORS configuration
+      - key: CORS_ORIGINS
+        value: "*"  # Update with your actual frontend domains in production
+
+      # Rate Limiting (Phase 1, Module 1.4)
+      # Per-service rate limits
+      - key: RATE_LIMIT_CORP_BACKEND
+        value: "5000 per hour"
+
+      - key: RATE_LIMIT_ASTRO_RATAN
+        value: "2000 per hour"
+
+      - key: RATE_LIMIT_REPORT_ENGINE
+        value: "1000 per hour"
+
+      - key: RATE_LIMIT_TESTING
+        value: "100 per hour"
+
+      - key: RATE_LIMIT_DEFAULT
+        value: "100 per hour"
+
+      # Logging configuration
+      - key: LOG_LEVEL
+        value: "INFO"
+
+      - key: LOG_FILE
+        value: "/app/logs/astro_engine.log"
+
+      - key: LOG_MAX_BYTES
+        value: "104857600"  # 100MB
+
+      - key: LOG_BACKUP_COUNT
+        value: "5"
+
+      # Monitoring
+      - key: METRICS_ENABLED
+        value: "true"
+
+      - key: HEALTH_CHECK_ENABLED
+        value: "true"
+
+      # Cache configuration (will be set after Redis creation)
+      - key: CACHE_ENABLED
+        value: "true"
+
+      - key: CACHE_DEFAULT_TIMEOUT
+        value: "86400"  # 24 hours for natal charts
+
+      # Redis URL (will be automatically set by DigitalOcean when database is attached)
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: "${redis-cache.REDIS_URL}"  # Auto-populated from database
+
+      # Secret key (IMPORTANT: Change this to a random value)
+      - key: SECRET_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: "CHANGE_THIS_TO_RANDOM_SECRET_KEY_64_CHARACTERS_MINIMUM_VALUE"
+
+      # API Key Authentication (Phase 1, Module 1.3)
+      # Enable/disable authentication enforcement
+      - key: AUTH_REQUIRED
+        value: "false"  # Set to "true" after distributing keys to all services
+
+      # Valid API Keys (CRITICAL: Set this as a SECRET in DigitalOcean)
+      # Generate keys with: python3 -c "from astro_engine.auth_manager import generate_api_key; print(generate_api_key('service_name'))"
+      - key: VALID_API_KEYS
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: "REPLACE_WITH_COMMA_SEPARATED_API_KEYS"
+
+      # Routes exempt from authentication
+      - key: AUTH_EXEMPT_ROUTES
+        value: "/health,/metrics"
+
+    # Resource allocation
+    resources:
+      cpu_type: SHARED
+
+    # Routes configuration
+    routes:
+      - path: /
+        preserve_path_prefix: true
+
+# Managed Redis Database
+databases:
+  - name: redis-cache
+    engine: REDIS
+    version: "7"
+    size: db-s-1vcpu-1gb  # 1GB RAM, 1 vCPU - $15/month
+    production: true
+
+# Static routes (optional - for future static file serving)
+# static_sites: []
+
+# Worker services (optional - for Celery in future)
+# workers: []
+
+# Jobs (optional - for scheduled tasks in future)
+# jobs: []
+
+# Ingress configuration
+ingress:
+  rules:
+    - component:
+        name: api
+      match:
+        path:
+          prefix: /

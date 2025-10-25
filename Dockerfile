@@ -8,9 +8,11 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (g++ needed for pyswisseph)
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
+    make \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

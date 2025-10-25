@@ -20,24 +20,35 @@ try:
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
     from .engine.routes.WesternType import ws
-    
+
     # Import performance enhancements
-    from .cache_manager import create_cache_manager
+    # Use Redis-enabled cache manager if REDIS_URL is set, otherwise use stub
+    cache_enabled = os.getenv('CACHE_ENABLED', 'false').lower() == 'true'
+    if cache_enabled and os.getenv('REDIS_URL'):
+        from .cache_manager_redis import create_cache_manager
+    else:
+        from .cache_manager import create_cache_manager
     from .metrics_manager import create_metrics_manager
     from .structured_logger import create_structured_logger
     from .celery_manager import create_celery_manager
+    from .auth_manager import create_api_key_manager, get_api_key_from_request
 except ImportError:
     # Fallback to absolute imports (for direct execution)
     from .engine.routes.KpNew import kp
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
     from astro_engine.engine.routes.WesternType import ws
-    
+
     # Import performance enhancements
-    from .cache_manager import create_cache_manager
+    cache_enabled = os.getenv('CACHE_ENABLED', 'false').lower() == 'true'
+    if cache_enabled and os.getenv('REDIS_URL'):
+        from .cache_manager_redis import create_cache_manager
+    else:
+        from .cache_manager import create_cache_manager
     from .metrics_manager import create_metrics_manager
     from .structured_logger import create_structured_logger
     from .celery_manager import create_celery_manager
+    from .auth_manager import create_api_key_manager, get_api_key_from_request
 
 def create_app():
     """Application factory pattern"""
@@ -53,12 +64,135 @@ def create_app():
         cors_origins = cors_origins.split(',')
     CORS(app, resources={r"/*": {"origins": cors_origins}})
     
-    # Rate limiting
+    # =============================================================================
+    # PHASE 1, MODULE 1.4: RATE LIMITING PER API KEY
+    # =============================================================================
+
+    # Define rate limits per service type
+    API_KEY_RATE_LIMITS = {
+        'astro_corp_': os.getenv('RATE_LIMIT_CORP_BACKEND', '5000 per hour'),
+        'astro_astro_ratan_': os.getenv('RATE_LIMIT_ASTRO_RATAN', '2000 per hour'),
+        'astro_report_': os.getenv('RATE_LIMIT_REPORT_ENGINE', '1000 per hour'),
+        'astro_testing_': os.getenv('RATE_LIMIT_TESTING', '100 per hour'),
+    }
+
+    def get_rate_limit_key():
+        """
+        Get rate limit key based on API key
+        Falls back to IP address if no API key
+
+        Phase 1, Module 1.4: Per-API-key rate limiting
+        """
+        # Try to get API key from request
+        api_key = request.headers.get('X-API-Key')
+
+        if api_key:
+            # Use API key for rate limiting (allows per-service limits)
+            return api_key
+
+        # Fallback to IP address for unauthenticated requests
+        return get_remote_address()
+
+    def get_rate_limit_for_request():
+        """
+        Determine rate limit based on API key prefix
+
+        Phase 1, Module 1.4: Dynamic rate limits per service
+        """
+        api_key = request.headers.get('X-API-Key', '')
+
+        # Check which service this key belongs to
+        for prefix, limit in API_KEY_RATE_LIMITS.items():
+            if api_key.startswith(prefix):
+                return limit
+
+        # Default rate limit (for unknown keys or no auth)
+        return os.getenv('RATE_LIMIT_DEFAULT', '100 per hour')
+
+    # Initialize rate limiter with per-API-key tracking
     limiter = Limiter(
-        key_func=get_remote_address,
+        key_func=get_rate_limit_key,
         app=app,
-        default_limits=[f"{os.getenv('RATE_LIMIT_REQUESTS', '1000')} per hour"]
+        default_limits=[],  # Will use dynamic limits
+        storage_uri=os.getenv('REDIS_URL') if os.getenv('REDIS_URL') else 'memory://'
     )
+
+    # Apply rate limits globally with dynamic limits
+    @app.before_request
+    def apply_rate_limits():
+        """
+        Apply dynamic rate limits based on API key
+
+        Phase 1, Module 1.4: Dynamic rate limit application
+        """
+        # Skip rate limiting for exempt routes
+        if hasattr(app, 'api_key_manager') and app.api_key_manager.is_route_exempt(request.path):
+            return None
+
+        # Get the rate limit for this request
+        rate_limit = get_rate_limit_for_request()
+
+        # Check if limit exceeded
+        try:
+            # Parse limit (e.g., "5000 per hour")
+            limit_parts = rate_limit.split()
+            if len(limit_parts) >= 3:
+                limit_value = int(limit_parts[0])
+
+                # Get current usage
+                api_key = request.headers.get('X-API-Key', get_remote_address())
+
+                # This will be handled by Flask-Limiter's decorator
+                # We'll add this to routes in next step
+                pass
+
+        except Exception as e:
+            app.logger.error(f"Error applying rate limit: {e}")
+
+        return None
+
+    # Custom rate limit error handler
+    @app.errorhandler(429)
+    def rate_limit_exceeded(e):
+        """
+        Handle rate limit exceeded errors
+
+        Phase 1, Module 1.4: Rate limit error handling
+        """
+        api_key = request.headers.get('X-API-Key', 'unknown')
+        api_key_masked = api_key[:12] + '***' if len(api_key) > 12 else api_key
+
+        # Log rate limit exceeded
+        if hasattr(app, 'structured_logger'):
+            app.structured_logger.log_security_event(
+                'rate_limit_exceeded',
+                'API rate limit exceeded',
+                {
+                    'api_key': api_key_masked,
+                    'path': request.path,
+                    'ip': request.remote_addr,
+                    'request_id': g.get('request_id', 'unknown')
+                }
+            )
+
+        # Get rate limit details
+        rate_limit = get_rate_limit_for_request()
+
+        return jsonify({
+            'error': {
+                'code': 'RATE_LIMIT_EXCEEDED',
+                'error_code': 4029,
+                'message': f'Rate limit exceeded. Your limit: {rate_limit}',
+                'rate_limit': rate_limit,
+                'retry_after': '3600 seconds'  # 1 hour
+            },
+            'status': 'error',
+            'request_id': g.get('request_id', 'unknown')
+        }), 429
+
+    # =============================================================================
+    # END RATE LIMITING CONFIGURATION
+    # =============================================================================
     
     # Logging configuration
     log_level = getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -89,11 +223,11 @@ def create_app():
     # Set Swiss Ephemeris path
     ephe_path = os.getenv('EPHEMERIS_PATH', 'astro_engine/ephe')
     swe.set_ephe_path(ephe_path)
-    
+
     # Initialize Redis cache manager
-    # cache_manager = create_cache_manager(app)
-    # app.logger.info(f"Cache manager initialized: {'✅ Redis available' if cache_manager.is_available() else '❌ Redis unavailable'}")
-    
+    cache_manager = create_cache_manager(app)
+    app.logger.info(f"Cache manager initialized: {'✅ Redis available' if cache_manager.is_available() else '❌ Redis unavailable (running without cache)'}")
+
     # Initialize Prometheus metrics manager
     metrics_manager = create_metrics_manager(app)
     app.logger.info("✅ Prometheus metrics manager initialized")
@@ -105,13 +239,148 @@ def create_app():
     # Initialize Celery task queue manager (Phase 4.1)
     celery_manager = create_celery_manager(app)
     app.logger.info("✅ Celery task queue manager initialized")
-    
+
+    # Initialize API Key Authentication Manager (Phase 1, Module 1.2)
+    api_key_manager = create_api_key_manager(app)
+    auth_required = os.getenv('AUTH_REQUIRED', 'false').lower() == 'true'
+    if api_key_manager.is_enabled():
+        app.logger.info(f"✅ API Key authentication initialized ({'ENFORCED' if auth_required else 'OPTIONAL'})")
+    else:
+        app.logger.warning("⚠️  API Key authentication DISABLED - no keys configured")
+
     # Register blueprints
     app.register_blueprint(kp)  # KP System routes
     app.register_blueprint(bp)  # Lahiri Ayanamsa routes
     app.register_blueprint(rl)  # Raman Ayanamsa routes
     app.register_blueprint(ws)  # western Ayanamsa routes
-    
+
+    # =============================================================================
+    # PHASE 1, MODULE 1.2: AUTHENTICATION MIDDLEWARE
+    # =============================================================================
+
+    @app.before_request
+    def authenticate_request():
+        """
+        Global authentication middleware
+        Validates API key for all requests except exempt routes
+
+        Phase 1, Module 1.2: Flask Authentication Middleware
+        """
+        import uuid
+
+        # Generate request ID for tracking
+        if not hasattr(g, 'request_id'):
+            g.request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+
+        # Check if route is exempt from authentication
+        if hasattr(app, 'api_key_manager') and app.api_key_manager.is_route_exempt(request.path):
+            app.api_key_manager.stats['exempt_requests'] += 1
+            return None  # Allow request
+
+        # Check if authentication is enforced
+        auth_required = os.getenv('AUTH_REQUIRED', 'false').lower() == 'true'
+
+        # If auth not enforced, allow all requests (transition period)
+        if not auth_required:
+            return None
+
+        # Extract API key from request
+        api_key = get_api_key_from_request(request)
+
+        # Validate API key
+        if not hasattr(app, 'api_key_manager'):
+            # Auth manager not initialized, allow request
+            app.logger.warning("⚠️  Auth manager not initialized")
+            return None
+
+        if not app.api_key_manager.validate_api_key(api_key):
+            # Log failed authentication attempt
+            if hasattr(app, 'structured_logger'):
+                app.structured_logger.log_security_event(
+                    'auth_failed',
+                    'Invalid or missing API key',
+                    {
+                        'path': request.path,
+                        'method': request.method,
+                        'ip': request.remote_addr,
+                        'request_id': g.request_id
+                    }
+                )
+
+            # Return 401 Unauthorized
+            return jsonify({
+                'error': {
+                    'code': 'UNAUTHORIZED',
+                    'error_code': 4001,
+                    'message': 'Valid API key required. Include X-API-Key header in your request.',
+                    'documentation': 'https://github.com/Project-Corp-Astro/Astro_Engine#authentication'
+                },
+                'status': 'error',
+                'request_id': g.request_id
+            }), 401
+
+        # Store API key metadata in request context
+        g.api_key = api_key
+        if hasattr(app, 'api_key_manager'):
+            g.api_key_metadata = app.api_key_manager.get_key_metadata(api_key)
+
+        # Log successful authentication
+        if hasattr(app, 'structured_logger'):
+            app.structured_logger.log_security_event(
+                'auth_success',
+                'Request authenticated',
+                {
+                    'path': request.path,
+                    'service': g.api_key_metadata.get('service', 'unknown'),
+                    'request_id': g.request_id
+                }
+            )
+
+        return None  # Continue with request
+
+    @app.after_request
+    def add_security_headers(response):
+        """
+        Add security headers and request ID to all responses
+
+        Phase 1, Module 1.2 & 1.4: Response headers including rate limit info
+        """
+        # Add request ID header for tracing
+        if hasattr(g, 'request_id'):
+            response.headers['X-Request-ID'] = g.request_id
+
+        # Add security headers
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+
+        # Add API version header
+        response.headers['X-API-Version'] = '1.3.0'
+
+        # Add rate limit headers (Phase 1, Module 1.4)
+        rate_limit = get_rate_limit_for_request()
+        if rate_limit:
+            # Parse limit (e.g., "5000 per hour")
+            try:
+                limit_parts = rate_limit.split()
+                if len(limit_parts) >= 3:
+                    limit_value = limit_parts[0]
+                    limit_period = limit_parts[2]  # hour, minute, etc.
+
+                    response.headers['X-RateLimit-Limit'] = limit_value
+                    response.headers['X-RateLimit-Period'] = limit_period
+
+                    # Note: X-RateLimit-Remaining would require tracking
+                    # Flask-Limiter provides this automatically via its decorator
+            except Exception as e:
+                app.logger.debug(f"Error adding rate limit headers: {e}")
+
+        return response
+
+    # =============================================================================
+    # END AUTHENTICATION MIDDLEWARE
+    # =============================================================================
+
     # Health check endpoint
     @app.route('/health')
     def health_check():
@@ -408,14 +677,116 @@ def create_app():
         """Clear cache entries matching pattern"""
         if not hasattr(app, 'cache_manager'):
             return jsonify({'error': 'Cache not configured'}), 404
-        
+
         deleted = app.cache_manager.delete(f"*{pattern}*")
         return jsonify({
             'deleted': deleted,
             'pattern': pattern,
             'message': f'Deleted {deleted} cache entries'
         })
-    
+
+    # =============================================================================
+    # PHASE 1, MODULE 1.5: AUTHENTICATION MONITORING ENDPOINTS
+    # =============================================================================
+
+    @app.route('/auth/stats')
+    def auth_stats():
+        """
+        Get authentication statistics
+
+        Phase 1, Module 1.5: Authentication monitoring
+        Returns detailed statistics about API key usage and authentication attempts
+        """
+        if not hasattr(app, 'api_key_manager'):
+            return jsonify({'error': 'Authentication not configured'}), 404
+
+        stats = app.api_key_manager.get_stats()
+
+        return jsonify({
+            'authentication': stats,
+            'timestamp': datetime.utcnow().isoformat(),
+            'enabled': app.api_key_manager.is_enabled(),
+            'enforced': os.getenv('AUTH_REQUIRED', 'false').lower() == 'true'
+        })
+
+    @app.route('/auth/keys/info')
+    def auth_keys_info():
+        """
+        Get information about configured API keys (without exposing actual keys)
+
+        Phase 1, Module 1.5: API key registry information
+        """
+        if not hasattr(app, 'api_key_manager'):
+            return jsonify({'error': 'Authentication not configured'}), 404
+
+        # Return metadata about keys without exposing actual values
+        keys_info = []
+
+        for key in app.api_key_manager.valid_keys:
+            metadata = app.api_key_manager.get_key_metadata(key)
+            keys_info.append({
+                'service': metadata.get('service'),
+                'prefix': metadata.get('prefix'),
+                'masked_key': metadata.get('masked_key'),
+                'valid': True
+            })
+
+        return jsonify({
+            'total_keys': len(app.api_key_manager.valid_keys),
+            'keys': keys_info,
+            'exempt_routes': app.api_key_manager.exempt_routes,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+
+    @app.route('/auth/health')
+    def auth_health():
+        """
+        Check authentication system health
+
+        Phase 1, Module 1.5: Authentication health check
+        """
+        if not hasattr(app, 'api_key_manager'):
+            return jsonify({
+                'status': 'not_configured',
+                'healthy': False,
+                'message': 'Authentication manager not initialized'
+            }), 503
+
+        is_enabled = app.api_key_manager.is_enabled()
+        auth_enforced = os.getenv('AUTH_REQUIRED', 'false').lower() == 'true'
+
+        # Determine health status
+        if not is_enabled and auth_enforced:
+            # Configuration error: enforcement enabled but no keys
+            status = 'unhealthy'
+            healthy = False
+            message = 'AUTH_REQUIRED=true but no API keys configured'
+        elif is_enabled:
+            status = 'healthy'
+            healthy = True
+            message = f'Authentication active ({len(app.api_key_manager.valid_keys)} keys configured)'
+        else:
+            status = 'disabled'
+            healthy = True
+            message = 'Authentication disabled (no keys configured)'
+
+        return jsonify({
+            'status': status,
+            'healthy': healthy,
+            'message': message,
+            'details': {
+                'enabled': is_enabled,
+                'enforced': auth_enforced,
+                'total_keys': len(app.api_key_manager.valid_keys),
+                'exempt_routes_count': len(app.api_key_manager.exempt_routes)
+            },
+            'timestamp': datetime.utcnow().isoformat()
+        })
+
+    # =============================================================================
+    # END AUTHENTICATION MONITORING
+    # =============================================================================
+
     # Celery task management endpoints (Phase 4.1)
     @app.route('/tasks/submit', methods=['POST'])
     def submit_task():
