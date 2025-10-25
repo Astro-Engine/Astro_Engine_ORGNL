@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_compress import Compress  # Phase 8, Module 8.1
 import swisseph as swe
 import logging
 from dotenv import load_dotenv
@@ -63,7 +64,33 @@ def create_app():
     if cors_origins != '*':
         cors_origins = cors_origins.split(',')
     CORS(app, resources={r"/*": {"origins": cors_origins}})
-    
+
+    # =============================================================================
+    # PHASE 8, MODULE 8.1-8.2: RESPONSE COMPRESSION
+    # =============================================================================
+
+    # Initialize compression
+    compress = Compress()
+    app.config['COMPRESS_MIMETYPES'] = [
+        'application/json',
+        'text/html',
+        'text/css',
+        'text/xml',
+        'application/javascript',
+        'text/plain'
+    ]
+    app.config['COMPRESS_LEVEL'] = 6  # Balance between speed and compression (1-9)
+    app.config['COMPRESS_MIN_SIZE'] = 1024  # Only compress responses > 1KB
+    app.config['COMPRESS_ALGORITHM'] = ['gzip', 'deflate', 'br']  # Support multiple algorithms
+    compress.init_app(app)
+
+    app.logger.info("✅ Response compression initialized (gzip, deflate, brotli)")
+    app.logger.info(f"   Min size: 1KB, Compression level: 6")
+
+    # =============================================================================
+    # END RESPONSE COMPRESSION
+    # =============================================================================
+
     # =============================================================================
     # PHASE 1, MODULE 1.4: RATE LIMITING PER API KEY
     # =============================================================================
