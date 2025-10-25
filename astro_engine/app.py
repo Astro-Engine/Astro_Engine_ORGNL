@@ -787,6 +787,37 @@ def create_app():
     # END AUTHENTICATION MONITORING
     # =============================================================================
 
+    # =============================================================================
+    # PHASE 6, MODULE 6.4: CIRCUIT BREAKER MONITORING
+    # =============================================================================
+
+    @app.route('/circuit/status')
+    def circuit_breaker_status():
+        """
+        Get status of all circuit breakers
+
+        Phase 6, Module 6.4: Circuit breaker monitoring endpoint
+        """
+        try:
+            from astro_engine.circuit_breakers import get_all_breakers_status
+
+            status = get_all_breakers_status()
+
+            return jsonify({
+                'circuit_breakers': status,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        except Exception as e:
+            return jsonify({
+                'error': 'Circuit breaker status unavailable',
+                'message': str(e)
+            }), 500
+
+    # =============================================================================
+    # END CIRCUIT BREAKER MONITORING
+    # =============================================================================
+
     # Celery task management endpoints (Phase 4.1)
     @app.route('/tasks/submit', methods=['POST'])
     def submit_task():
