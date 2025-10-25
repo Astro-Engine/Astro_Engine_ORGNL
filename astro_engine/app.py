@@ -904,31 +904,83 @@ def create_app():
         else:
             return jsonify(result), 500
 
-    # Error handlers
+    # =============================================================================
+    # PHASE 3, MODULE 3.3: GLOBAL ERROR HANDLERS
+    # =============================================================================
+
+    from astro_engine.exceptions import AstroEngineError
+
+    @app.errorhandler(AstroEngineError)
+    def handle_astro_engine_error(error: AstroEngineError):
+        """Handle all Astro Engine custom exceptions - Phase 3, Module 3.3"""
+        app.logger.error(
+            f"AstroEngineError: {error.__class__.__name__}",
+            exc_info=True,
+            extra={'error_code': error.error_code, 'request_id': g.get('request_id')}
+        )
+
+        response_data = error.to_dict()
+        response_data['status'] = 'error'
+        response_data['request_id'] = g.get('request_id', 'unknown')
+
+        return jsonify(response_data), error.http_status
+
     @app.errorhandler(404)
     def not_found(error):
+        """Handle 404 Not Found - Phase 3, Module 3.3 (Standardized)"""
         return jsonify({
-            'error': 'Not Found',
-            'message': 'The requested endpoint does not exist',
-            'status_code': 404
+            'error': {
+                'code': 'NOT_FOUND',
+                'error_code': 404,
+                'message': 'The requested endpoint does not exist',
+                'path': request.path
+            },
+            'status': 'error',
+            'request_id': g.get('request_id', 'unknown')
         }), 404
-    
+
     @app.errorhandler(500)
     def internal_error(error):
+        """Handle 500 Internal Server Error - Phase 3, Module 3.3 (Standardized)"""
+        app.logger.critical(f"Internal Server Error: {error}", exc_info=True)
+
         return jsonify({
-            'error': 'Internal Server Error',
-            'message': 'An unexpected error occurred',
-            'status_code': 500
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'error_code': 5000,
+                'message': 'An unexpected error occurred',
+                'suggestion': 'Please contact support with request_id'
+            },
+            'status': 'error',
+            'request_id': g.get('request_id', 'unknown')
         }), 500
-    
-    @app.errorhandler(429)
-    def ratelimit_handler(e):
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        """Catch-all handler - Phase 3, Module 3.3"""
+        app.logger.critical(
+            f"Unexpected error: {error.__class__.__name__}: {error}",
+            exc_info=True,
+            extra={'request_id': g.get('request_id')}
+        )
+
         return jsonify({
-            'error': 'Rate Limit Exceeded',
-            'message': 'Too many requests, please try again later',
-            'status_code': 429
-        }), 429
-    
+            'error': {
+                'code': 'UNEXPECTED_ERROR',
+                'error_code': 5000,
+                'message': 'An unexpected error occurred',
+                'type': error.__class__.__name__
+            },
+            'status': 'error',
+            'request_id': g.get('request_id', 'unknown')
+        }), 500
+
+    # Note: Duplicate 429 handler removed (Phase 1 handler at line 155 is the correct one)
+
+    # =============================================================================
+    # END GLOBAL ERROR HANDLERS
+    # =============================================================================
+
     return app
 
 # Create app instance
