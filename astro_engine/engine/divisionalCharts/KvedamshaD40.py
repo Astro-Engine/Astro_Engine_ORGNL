@@ -70,7 +70,7 @@ def get_nakshatra_and_pada(sidereal_lon):
 def lahairi_Khavedamsha(birth_date, birth_time, latitude, longitude, tz_offset):
     """Calculate the Lahiri Khavedamsha (D40) chart with retrograde, nakshatras, and padas."""
     # Set ephemeris path and Lahiri ayanamsa
-    swe.set_ephe_path('astro_api/ephe')
+    swe.set_ephe_path('astro_engine/ephe')
     jd_ut = get_julian_day(birth_date, birth_time, tz_offset)
     swe.set_sid_mode(swe.SIDM_LAHIRI)
 

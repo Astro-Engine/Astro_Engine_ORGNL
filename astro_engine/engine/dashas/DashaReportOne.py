@@ -2,7 +2,7 @@ import swisseph as swe
 from datetime import datetime, timedelta
 
 # Set Swiss Ephemeris path (adjust path as needed)
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Nakshatra details: Name, Start Degree, Ruling Planet
 NAKSHATRAS = [

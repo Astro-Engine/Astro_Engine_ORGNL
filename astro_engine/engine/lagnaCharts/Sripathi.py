@@ -140,7 +140,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 # Configure Swiss Ephemeris
-swe.set_ephe_path('astro_api/ephe')  # Ensure this path points to your ephemeris files
+swe.set_ephe_path('astro_engine/ephe')  # Ensure this path points to your ephemeris files
 swe.set_sid_mode(swe.SIDM_LAHIRI)    # Lahiri Ayanamsa for sidereal astrology
 
 # Constants

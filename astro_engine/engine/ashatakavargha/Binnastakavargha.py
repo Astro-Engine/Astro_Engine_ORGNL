@@ -182,7 +182,7 @@ def format_dms(degrees):
 def lahiri_binnastakavargha(birth_date, birth_time, latitude, longitude, tz_offset):
     """Calculate Bhinnashtakavarga using Lahiri Ayanamsa based on birth details."""
     # Set Swiss Ephemeris path
-    swe.set_ephe_path('astro_api/ephe')
+    swe.set_ephe_path('astro_engine/ephe')
 
     # Calculate Julian Day and Ayanamsa
     jd = get_julian_day(birth_date, birth_time, tz_offset)

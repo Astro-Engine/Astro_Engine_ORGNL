@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-swe.set_ephe_path("astro_api/ephe")
+swe.set_ephe_path('astro_engine/ephe')
 swe.set_sid_mode(swe.SIDM_KRISHNAMURTI)  # KP New ayanamsa
 
 SIGNS_kp = [

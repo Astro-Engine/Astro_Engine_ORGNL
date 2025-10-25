@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Set Swiss Ephemeris path (adjust as needed)
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Constants
 DASHA_SEQUENCE = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury']

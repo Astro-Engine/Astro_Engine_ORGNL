@@ -70,7 +70,7 @@ def get_nakshatra_and_pada(sidereal_lon):
 def lahairi_Chaturvimshamsha(birth_date, birth_time, latitude, longitude, tz_offset):
     """Calculate the Lahiri Chaturvimshamsha (D24) chart."""
     # Set ephemeris path (adjust as needed)
-    swe.set_ephe_path('astro_api/ephe')
+    swe.set_ephe_path('astro_engine/ephe')
     
     # Calculate Julian Day and set Lahiri ayanamsa
     jd_ut = get_julian_day(birth_date, birth_time, tz_offset)

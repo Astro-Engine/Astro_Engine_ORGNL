@@ -18,7 +18,7 @@ NAKSHATRAS = [
 ]
 
 # Set Swiss Ephemeris path
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 def get_julian_day(birth_date, birth_time, tz_offset):
     """Convert birth date and time to Julian Day with timezone adjustment."""

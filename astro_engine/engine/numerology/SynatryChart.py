@@ -6,7 +6,7 @@
 # import logging
 
 # # Set Swiss Ephemeris path (update to your ephemeris files' location)
-# swe.set_ephe_path('astro_api/ephe')
+# swe.set_ephe_path('astro_engine/ephe')
 
 # # Constants
 # PLANETS = {
@@ -266,7 +266,7 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Constants
 PLANETS = {

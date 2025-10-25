@@ -2,7 +2,7 @@ import swisseph as swe
 from datetime import datetime, timedelta
 
 # Set ephemeris path
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 ZODIAC_SIGNS_d27 = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",

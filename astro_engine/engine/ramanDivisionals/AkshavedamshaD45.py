@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import math
 
 # Set Swiss Ephemeris path (adjust path as needed)
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Zodiac signs (0-based index: Aries=0, Taurus=1, ..., Pisces=11)
 SIGNS = [

@@ -2,7 +2,7 @@ import swisseph as swe
 from datetime import datetime, timedelta
 
 # Set Swiss Ephemeris path
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Zodiac signs list
 SIGNS = [

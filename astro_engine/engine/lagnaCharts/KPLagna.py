@@ -7,7 +7,7 @@ from math import floor
 from datetime import datetime, timedelta
 
 # Set Swiss Ephemeris path
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Define planets and factors (including Ketu)
 PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']

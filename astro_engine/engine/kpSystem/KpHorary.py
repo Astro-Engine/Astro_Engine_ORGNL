@@ -5,7 +5,7 @@ from flask_cors import CORS
 from datetime import datetime, timedelta
 
 # --- KP Constants ---
-SWISS_EPHE_PATH = "astro_api/ephe"
+SWISS_EPHE_PATH = "astro_engine/ephe"
 KP_NEW_AYANAMSA = swe.SIDM_KRISHNAMURTI
 ZODIAC_SIGNS = [
     'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',

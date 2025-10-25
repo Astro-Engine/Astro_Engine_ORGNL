@@ -4,7 +4,7 @@ from datetime import datetime
 import logging
 from venv import logger
 import swisseph as swe
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 from astro_engine.engine.lagnaCharts.RamanHoraLagna import raman_hora_calculate_chart
 from astro_engine.engine.lagnaCharts.RamanBavaLagna import PLANET_IDS, raman_bava_calculate_bhava_lagna, raman_bava_calculate_house, raman_bava_calculate_sunrise, raman_bava_get_julian_day, raman_bava_get_sign_and_degrees, raman_bava_nakshatra_and_pada

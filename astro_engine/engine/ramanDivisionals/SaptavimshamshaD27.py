@@ -1,7 +1,7 @@
 import swisseph as swe
 from datetime import datetime, timedelta
 
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 ZODIAC_SIGNS_raman = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",

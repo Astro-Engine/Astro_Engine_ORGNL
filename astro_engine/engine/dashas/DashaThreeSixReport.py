@@ -4,7 +4,7 @@ from math import floor
 from copy import deepcopy
 
 # Set Swiss Ephemeris path (adjust path as needed)
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Nakshatra details: name, start degree, ruling planet
 NAKSHATRAS = [

@@ -19,7 +19,7 @@ from astro_engine.engine.yogas.GuruMangalYoga import calculate_comprehensive_gur
 
 
 
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 
 from astro_engine.engine.lagnaCharts.LahiriHoraLagna import lahiri_hora_calculate_hora_lagna, lahiri_hora_calculate_house, lahiri_hora_calculate_sunrise_jd_and_asc, lahiri_hora_get_julian_day, lahiri_hora_get_sign_and_degrees, lahiri_hora_nakshatra_and_pada

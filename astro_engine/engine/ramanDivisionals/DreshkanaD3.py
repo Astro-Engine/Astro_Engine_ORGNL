@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import logging
 
 # Set Swiss Ephemeris path
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Get logger
 logger = logging.getLogger(__name__)

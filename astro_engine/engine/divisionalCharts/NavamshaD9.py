@@ -7,7 +7,7 @@ import swisseph as swe
 from datetime import datetime, timedelta
 
 # Set Swiss Ephemeris path (ensure ephemeris files are in 'astro_api/ephe')
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # List of zodiac signs
 signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',

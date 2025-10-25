@@ -7,7 +7,7 @@
 # import math
 
 # # Set ephemeris path and sidereal mode to Lahiri ayanamsa
-# swe.set_ephe_path('astro_api/ephe')
+# swe.set_ephe_path('astro_engine/ephe')
 # swe.set_sid_mode(swe.SIDM_LAHIRI)
 
 # # Define planets and corresponding Swiss Ephemeris constants
@@ -338,7 +338,7 @@ import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
-swe.set_ephe_path('astro_api/ephe')
+swe.set_ephe_path('astro_engine/ephe')
 
 # Constants
 PLANETS = {
