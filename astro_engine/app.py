@@ -166,8 +166,8 @@ def create_app():
         if hasattr(app, 'structured_logger'):
             app.structured_logger.log_security_event(
                 'rate_limit_exceeded',
-                'API rate limit exceeded',
                 {
+                    'message': 'API rate limit exceeded',
                     'api_key': api_key_masked,
                     'path': request.path,
                     'ip': request.remote_addr,
@@ -298,8 +298,8 @@ def create_app():
             if hasattr(app, 'structured_logger'):
                 app.structured_logger.log_security_event(
                     'auth_failed',
-                    'Invalid or missing API key',
                     {
+                        'message': 'Invalid or missing API key',
                         'path': request.path,
                         'method': request.method,
                         'ip': request.remote_addr,
@@ -328,8 +328,8 @@ def create_app():
         if hasattr(app, 'structured_logger'):
             app.structured_logger.log_security_event(
                 'auth_success',
-                'Request authenticated',
                 {
+                    'message': 'Request authenticated',
                     'path': request.path,
                     'service': g.api_key_metadata.get('service', 'unknown'),
                     'request_id': g.request_id
