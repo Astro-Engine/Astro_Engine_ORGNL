@@ -25,6 +25,7 @@ Usage:
 from functools import wraps
 from flask import request, jsonify, g
 from pydantic import ValidationError
+from werkzeug.exceptions import BadRequest
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ def validate_schema(schema_class):
         def wrapper(*args, **kwargs):
             try:
                 # Get JSON data from request
+                # This may raise BadRequest if JSON is malformed
                 data = request.get_json()
 
                 if not data:
@@ -93,6 +95,22 @@ def validate_schema(schema_class):
 
                 # Call the actual route function
                 return func(*args, **kwargs)
+
+            except BadRequest as e:
+                # Flask raised BadRequest (malformed JSON, etc.)
+                logger.warning(f"Bad request in {func.__name__}: {e}")
+
+                return jsonify({
+                    'error': {
+                        'code': 'INVALID_JSON',
+                        'error_code': 1008,
+                        'message': 'Invalid JSON in request body',
+                        'details': str(e),
+                        'suggestion': 'Ensure request body contains valid JSON'
+                    },
+                    'status': 'error',
+                    'request_id': g.get('request_id', 'unknown')
+                }), 400
 
             except ValidationError as e:
                 # Pydantic validation failed
