@@ -266,6 +266,8 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
+swe.set_ephe_path('astro_api/ephe')
+
 # Constants
 PLANETS = {
     'Sun': swe.SUN, 'Moon': swe.MOON, 'Mercury': swe.MERCURY, 'Venus': swe.VENUS,

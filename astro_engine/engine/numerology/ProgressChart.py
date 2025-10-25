@@ -338,6 +338,7 @@ import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
+swe.set_ephe_path('astro_api/ephe')
 
 # Constants
 PLANETS = {
