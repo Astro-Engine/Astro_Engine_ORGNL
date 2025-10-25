@@ -66,27 +66,38 @@ try:
     from ...cache_manager import cache_calculation
     from ...metrics_manager import metrics_decorator
     from ...structured_logger import structured_log_decorator
+    from ...schemas import validate_schema  # Phase 2, Module 2.2
+    from ...schemas.birth_data import BirthDataSchema  # Phase 2, Module 2.2
 except ImportError:
     # Fallback if import fails
     def cache_calculation(prefix, ttl=None):
         def decorator(func):
             return func
         return decorator
-    
+
     def metrics_decorator(calculation_type):
         def decorator(func):
             return func
         return decorator
-    
+
     def structured_log_decorator(calculation_type, log_inputs=True):
         def decorator(func):
             return func
         return decorator
 
+    # Fallback for validation decorator
+    def validate_schema(schema_class):
+        def decorator(func):
+            return func
+        return decorator
+
+    BirthDataSchema = None
+
 bp = Blueprint('bp_routes', __name__)
 
 # Natal Chart
 @bp.route('/lahiri/natal', methods=['POST'])
+@validate_schema(BirthDataSchema)  # Phase 2, Module 2.2: Input validation FIRST
 @cache_calculation('natal_chart', ttl=86400)  # 24 hour cache
 @metrics_decorator('natal_chart')
 @structured_log_decorator('natal_chart', log_inputs=True)
@@ -104,26 +115,37 @@ def natal_chart():
         if hasattr(current_app, 'metrics_manager'):
             current_app.metrics_manager.record_user_interaction('chart_request', 'natal_chart')
             current_app.metrics_manager.record_chart_request('natal', 'lahiri')
-        
-        birth_data = request.get_json()
-        if not birth_data:
-            if logger:
-                logger.warning("No JSON data provided in request")
-            return jsonify({"error": "No JSON data provided"}), 400
 
-        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-        missing_fields = [field for field in required if field not in birth_data]
-        if missing_fields:
-            if logger:
-                logger.warning("Missing required parameters", missing_fields=missing_fields)
-            return jsonify({"error": "Missing required parameters"}), 400
+        # Phase 2, Module 2.2: Get validated data from request context
+        # Data is already validated by @validate_schema decorator
+        birth_data = request.validated_data.to_dict() if hasattr(request, 'validated_data') else request.get_json()
 
-        latitude = float(birth_data['latitude'])
-        longitude = float(birth_data['longitude'])
-        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
-            if logger:
-                logger.warning("Invalid coordinates", latitude=latitude, longitude=longitude)
-            return jsonify({"error": "Invalid latitude or longitude"}), 400
+        # Legacy validation (kept for backward compatibility / fallback)
+        # This code will not execute if validate_schema decorator worked
+        # But provides safety net if decorator is disabled
+        if not hasattr(request, 'validated_data'):
+            if not birth_data:
+                if logger:
+                    logger.warning("No JSON data provided in request")
+                return jsonify({"error": "No JSON data provided"}), 400
+
+            required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+            missing_fields = [field for field in required if field not in birth_data]
+            if missing_fields:
+                if logger:
+                    logger.warning("Missing required parameters", missing_fields=missing_fields)
+                return jsonify({"error": "Missing required parameters"}), 400
+
+            latitude = float(birth_data['latitude'])
+            longitude = float(birth_data['longitude'])
+            if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+                if logger:
+                    logger.warning("Invalid coordinates", latitude=latitude, longitude=longitude)
+                return jsonify({"error": "Invalid latitude or longitude"}), 400
+        else:
+            # Data already validated - just extract for logging
+            latitude = birth_data['latitude']
+            longitude = birth_data['longitude']
 
         if logger:
             logger.info("Starting natal chart calculation",
