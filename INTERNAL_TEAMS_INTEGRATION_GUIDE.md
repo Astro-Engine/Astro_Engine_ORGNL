@@ -149,8 +149,8 @@ ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
 astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO
 ```
 
-**Rate Limit:** 1,000 requests per hour
-**Usage:** Batch report generation
+**Rate Limit:** 1,000,000 requests per hour (effectively unlimited)
+**Usage:** Batch report generation for all users
 
 **Store in Environment:**
 ```bash
@@ -168,8 +168,8 @@ ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
 astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```
 
-**Rate Limit:** 2,000 requests per hour (shared with Astro Ratan)
-**Usage:** Web chat astrological features
+**Rate Limit:** 1,000,000 requests per hour (shared with Astro Ratan)
+**Usage:** Web chat astrological features - unlimited for conversational interface
 
 **Alternative:** Request dedicated key if needed separate tracking
 
@@ -182,10 +182,10 @@ astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 astro_testing_PeqnsyOm9SEtG24vetc2ean9ldl4Z__S
 ```
 
-**Rate Limit:** 100 requests per hour (testing key)
-**Usage:** Admin operations, monitoring dashboards
+**Rate Limit:** 1,000,000 requests per hour (effectively unlimited)
+**Usage:** Admin operations, monitoring dashboards, system management
 
-**Recommendation:** Request dedicated admin key with higher limits
+**Note:** Same unlimited access as all internal services
 
 ---
 
@@ -1081,20 +1081,23 @@ AUTH_REQUIRED=true
 ## 📊 RATE LIMITS BY TEAM
 
 ```
-┌──────────────────────────┬────────────────┬─────────────────┐
-│ Team                     │ Rate Limit     │ ~Requests/Min   │
-├──────────────────────────┼────────────────┼─────────────────┤
-│ Astro Corp Mobile        │ 5,000/hour     │ ~83/minute      │
-│ Astro Ratan (AI)         │ 2,000/hour     │ ~33/minute      │
-│ Report Engine            │ 1,000/hour     │ ~16/minute      │
-│ Web Chat                 │ 2,000/hour     │ ~33/minute      │
-│ Super Admin              │ 100/hour       │ ~1.6/minute     │
-└──────────────────────────┴────────────────┴─────────────────┘
+┌──────────────────────────┬────────────────────┬─────────────────┐
+│ Team                     │ Rate Limit         │ Status          │
+├──────────────────────────┼────────────────────┼─────────────────┤
+│ Astro Corp Mobile        │ 1,000,000/hour     │ ✅ UNLIMITED    │
+│ Astro Ratan (AI)         │ 1,000,000/hour     │ ✅ UNLIMITED    │
+│ Report Engine            │ 1,000,000/hour     │ ✅ UNLIMITED    │
+│ Web Chat                 │ 1,000,000/hour     │ ✅ UNLIMITED    │
+│ Super Admin              │ 1,000,000/hour     │ ✅ UNLIMITED    │
+└──────────────────────────┴────────────────────┴─────────────────┘
+
+Note: Effectively unlimited for all internal Astro Corp services.
+No rate limiting between your own services - focus on performance!
 ```
 
-### **Rate Limit Best Practices**
+### **Best Practices (Even With Unlimited Rate Limits)**
 
-**1. Cache Everything in Supabase:**
+**1. Cache Everything in Supabase (For Performance, Not Rate Limits):**
 ```python
 # ALWAYS check Supabase first
 cached = supabase.table('charts').select('*').eq('user_id', uuid).execute()
@@ -1175,7 +1178,7 @@ All errors follow this format:
 - Fix the field mentioned
 - Ensure data types are correct (number, not string)
 
-**Error 2: Rate Limit Exceeded (429)**
+**Error 2: Rate Limit Exceeded (429)** - UNLIKELY with unlimited limits
 ```json
 {
   "error": {
@@ -1186,10 +1189,11 @@ All errors follow this format:
 }
 ```
 
-**Solution:**
-- Wait before retrying
-- Check if you're caching properly in Supabase
-- Consider requesting higher limits if needed
+**Solution (Very rare with 1M/hour limit):**
+- This should NOT happen with current unlimited limits
+- If you see this, contact DevOps immediately
+- Indicates possible configuration issue
+- Check if rate limits were accidentally changed
 
 **Error 3: Invalid API Key (401)**
 ```json
