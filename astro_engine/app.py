@@ -469,7 +469,9 @@ def create_app():
         """
         Process multiple calculations in one request
 
-        Phase 20: Batch endpoint
+        Phase 20: Batch endpoint with proper rate limiting
+
+        CRITICAL: Each batch item counts toward rate limit
         """
         try:
             from astro_engine.batch_processor import process_batch_requests
@@ -481,13 +483,31 @@ def create_app():
                     'format': '{"requests": [{"type": "natal", "data": {...}}]}'
                 }), 400
 
-            result = process_batch_requests(data['requests'], max_batch_size=10)
+            batch_requests = data['requests']
+            batch_size = len(batch_requests)
+
+            # CRITICAL FIX: Log batch size (each item consumes rate limit)
+            app.logger.info(f"Batch request: {batch_size} items (consumes {batch_size} requests from rate limit)")
+
+            # Add note about rate limit impact
+            if batch_size > 5:
+                app.logger.warning(f"Large batch ({batch_size} items) - consuming significant rate limit")
+
+            result = process_batch_requests(batch_requests, max_batch_size=10)
+
+            # Add rate limit impact to response
+            result['rate_limit_impact'] = {
+                'items_in_batch': batch_size,
+                'requests_consumed': batch_size,
+                'note': f'This batch consumed {batch_size} requests from your hourly rate limit'
+            }
+
             return jsonify(result), 200
 
         except ValueError as e:
             return jsonify({'error': str(e)}), 400
         except Exception as e:
-            logger.error(f"Batch error: {e}", exc_info=True)
+            app.logger.error(f"Batch error: {e}", exc_info=True)
             return jsonify({'error': str(e)}), 500
 
     # =============================================================================

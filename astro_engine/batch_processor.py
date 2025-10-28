@@ -81,6 +81,18 @@ def process_batch_requests(requests: List[Dict[str, Any]], max_batch_size: int =
 
     # Phase 20, Module 20.2: Process each request
     for index, req in enumerate(requests):
+        # FIX: Handle null items
+        if req is None:
+            logger.warning(f"Batch item {index} is null")
+            results.append({
+                'index': index,
+                'type': 'unknown',
+                'status': 'failed',
+                'error': {'message': 'Batch item is null', 'type': 'ValueError'}
+            })
+            failed_count += 1
+            continue
+
         req_type = req.get('type', 'unknown')
         req_data = req.get('data', {})
 
