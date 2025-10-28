@@ -515,6 +515,124 @@ def create_app():
     # =============================================================================
 
     # =============================================================================
+    # PHASE 25: WEBHOOK SUPPORT FOR ASYNC CALCULATIONS
+    # =============================================================================
+
+    @app.route('/async/calculate', methods=['POST'])
+    def async_calculate():
+        """
+        Submit calculation for async processing with webhook delivery
+
+        Phase 25, Module 25.1: Async calculation endpoint
+
+        Request:
+        {
+            "type": "natal",
+            "data": {birth_data},
+            "webhook_url": "https://your-server.com/webhook",
+            "webhook_secret": "optional-shared-secret"
+        }
+
+        Response:
+        {
+            "job_id": "abc-123",
+            "status": "queued",
+            "webhook_url": "https://...",
+            "estimated_time": "5-60 seconds"
+        }
+        """
+        try:
+            from astro_engine.queue_manager import create_queue_manager
+            from astro_engine.webhook_handler import async_natal_calculation
+
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+
+            calc_type = data.get('type', 'natal')
+            birth_data = data.get('data', {})
+            webhook_url = data.get('webhook_url')
+            webhook_secret = data.get('webhook_secret')
+
+            # Validate webhook URL
+            if not webhook_url:
+                return jsonify({'error': 'webhook_url required'}), 400
+
+            if not webhook_url.startswith(('http://', 'https://')):
+                return jsonify({'error': 'Invalid webhook_url (must be http:// or https://)'}), 400
+
+            # Create queue manager
+            queue_manager = create_queue_manager(app)
+
+            if not queue_manager.is_enabled:
+                # Fallback: Process synchronously and POST result
+                app.logger.warning("Queue not enabled, processing synchronously")
+
+                # Calculate
+                from astro_engine.engine.natalCharts.natal import lahairi_natal
+                result = lahairi_natal(birth_data)
+
+                # Deliver webhook immediately
+                from astro_engine.webhook_handler import deliver_webhook
+                deliver_webhook(webhook_url, {
+                    'status': 'completed',
+                    'result': result,
+                    'completed_at': datetime.utcnow().isoformat()
+                }, webhook_secret)
+
+                return jsonify({
+                    'job_id': 'sync-job',
+                    'status': 'completed',
+                    'note': 'Processed synchronously (queue not available)'
+                }), 200
+
+            # Enqueue job
+            job = queue_manager.enqueue_job(
+                async_natal_calculation,
+                args=[birth_data, webhook_url, webhook_secret],
+                timeout=300,  # 5 minutes max
+                result_ttl=3600  # Keep result for 1 hour
+            )
+
+            return jsonify({
+                'job_id': job.id,
+                'status': 'queued',
+                'webhook_url': webhook_url,
+                'estimated_time': '5-60 seconds',
+                'check_status': f'/async/job/{job.id}'
+            }), 202  # 202 Accepted
+
+        except Exception as e:
+            app.logger.error(f"Async calculation error: {e}", exc_info=True)
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/async/job/<job_id>')
+    def async_job_status(job_id: str):
+        """
+        Check status of async job
+
+        Phase 25, Module 25.4: Job status tracking
+        """
+        try:
+            from astro_engine.queue_manager import create_queue_manager
+
+            queue_manager = create_queue_manager(app)
+
+            if not queue_manager.is_enabled:
+                return jsonify({'error': 'Queue not enabled'}), 503
+
+            status = queue_manager.get_job_status(job_id)
+
+            return jsonify(status), 200
+
+        except Exception as e:
+            return jsonify({'error': str(e)}), 404
+
+    # =============================================================================
+    # END WEBHOOK SUPPORT
+    # =============================================================================
+
+    # =============================================================================
     # PHASE 22: ENHANCED HEALTH CHECKS
     # =============================================================================
 
