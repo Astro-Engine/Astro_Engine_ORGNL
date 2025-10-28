@@ -2,7 +2,12 @@
 ## Complete Integration Documentation for All Astro Corp Teams
 
 **Astro Engine Version:** 1.3.0
-**Production URL:** `https://urchin-app-kmfvy.ondigitalocean.app`
+
+**Production URLs:**
+- **Primary (Custom Domain):** `https://astroengine.astrocorp.com` ✅
+- **Backup (DigitalOcean):** `https://urchin-app-kmfvy.ondigitalocean.app` ✅
+- **Both URLs work!** Use either one.
+
 **Status:** ✅ LIVE IN PRODUCTION
 **Phase:** TESTING (Ready for 1 Million Users)
 **Last Updated:** October 28, 2025
@@ -10,6 +15,11 @@
 **🎯 IMPORTANT: Rate Limits Set to UNLIMITED for Internal Services**
 All Astro Corp services have 1,000,000 requests/hour (effectively unlimited).
 Since this is internal-only infrastructure, rate limiting doesn't apply.
+
+**🌐 CloudFlare CDN:** Configured for global performance
+- Cache rules active (calculations cached, monitoring bypassed)
+- SSL/HTTPS automatic
+- DDoS protection enabled
 
 ---
 
@@ -66,13 +76,24 @@ Astro Engine has undergone a **complete enterprise transformation** with 25 phas
 
 ## 🌐 PRODUCTION URL & STATUS
 
-### **Live Production URL**
+### **Live Production URLs**
 
 ```
-Base URL: https://urchin-app-kmfvy.ondigitalocean.app
+Primary URL (Custom Domain - CloudFlare CDN):
+  https://astroengine.astrocorp.com
+  Features: Global CDN, Edge caching, DDoS protection
+  Status: ✅ CONFIGURED (DNS propagating)
+
+Backup URL (DigitalOcean Direct):
+  https://urchin-app-kmfvy.ondigitalocean.app
+  Features: Direct to app, No CDN
+  Status: ✅ WORKING NOW
+
+Both URLs work! Use either one.
+Recommended: Use custom domain (astroengine.astrocorp.com)
+
 Region: Bangalore, India (blr)
-Status: ✅ LIVE
-Health: https://urchin-app-kmfvy.ondigitalocean.app/health
+Health Check: https://astroengine.astrocorp.com/health
 ```
 
 ### **Current Health Status**
@@ -118,7 +139,7 @@ astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv
 ```bash
 # Backend .env file
 ASTRO_ENGINE_API_KEY=astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv
-ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
 ```
 
 ---
@@ -137,7 +158,7 @@ astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```bash
 # Astro Ratan .env file
 ASTRO_ENGINE_API_KEY=astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
-ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
 ```
 
 ---
@@ -156,7 +177,7 @@ astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO
 ```bash
 # Report Engine .env file
 ASTRO_ENGINE_API_KEY=astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO
-ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
 ```
 
 ---
@@ -222,7 +243,7 @@ pip install requests
 // astro-engine-client.ts
 import axios from 'axios';
 
-const ASTRO_ENGINE_URL = process.env.ASTRO_ENGINE_URL || 'https://urchin-app-kmfvy.ondigitalocean.app';
+const ASTRO_ENGINE_URL = process.env.ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.com';
 const API_KEY = process.env.ASTRO_ENGINE_API_KEY;
 
 export class AstroEngineClient {
@@ -344,7 +365,7 @@ from typing import Dict, Any
 
 class AstroEngineClient:
     def __init__(self):
-        self.base_url = os.getenv('ASTRO_ENGINE_URL', 'https://urchin-app-kmfvy.ondigitalocean.app')
+        self.base_url = os.getenv('ASTRO_ENGINE_URL', 'https://astroengine.astrocorp.com')
         self.api_key = os.getenv('ASTRO_ENGINE_API_KEY')
 
         if not self.api_key:
@@ -454,7 +475,7 @@ def on_user_registration(user_data):
 **For Python (Recommended):**
 ```python
 # config.py or .env
-ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
 ASTRO_ENGINE_API_KEY=astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```
 
@@ -725,7 +746,7 @@ report = client.generate_comprehensive_report(user_uuid)
 
 ```javascript
 // astroEngineService.js
-const ASTRO_ENGINE_URL = process.env.REACT_APP_ASTRO_ENGINE_URL || 'https://urchin-app-kmfvy.ondigitalocean.app';
+const ASTRO_ENGINE_URL = process.env.REACT_APP_ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.com';
 const API_KEY = process.env.REACT_APP_ASTRO_ENGINE_API_KEY;
 
 export const astroEngineService = {
@@ -834,7 +855,7 @@ GET /errors/codes         - All error codes
 
 ```javascript
 // admin-dashboard.js
-const ASTRO_ENGINE_URL = 'https://urchin-app-kmfvy.ondigitalocean.app';
+const ASTRO_ENGINE_URL = 'https://astroengine.astrocorp.com';
 
 // Monitoring Dashboard
 async function fetchEngineStats() {
@@ -1016,7 +1037,7 @@ Header: X-API-Key: your-team-api-key
 
 **Example Request:**
 ```bash
-curl -X POST https://urchin-app-kmfvy.ondigitalocean.app/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
   -H "X-API-Key: astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1125,7 +1146,7 @@ Use batch:
 **3. Monitor Your Usage:**
 ```javascript
 // Check your current usage
-const stats = await fetch('https://urchin-app-kmfvy.ondigitalocean.app/auth/stats');
+const stats = await fetch('https://astroengine.astrocorp.com/auth/stats');
 const data = await stats.json();
 
 console.log('Success rate:', data.authentication.success_rate);
@@ -1237,7 +1258,7 @@ class AstroEngineClient:
     def __init__(self, api_key: Optional[str] = None):
         self.base_url = os.getenv(
             'ASTRO_ENGINE_URL',
-            'https://urchin-app-kmfvy.ondigitalocean.app'
+            'https://astroengine.astrocorp.com'
         )
         self.api_key = api_key or os.getenv('ASTRO_ENGINE_API_KEY')
 
@@ -1366,7 +1387,7 @@ if __name__ == '__main__':
 
 **Step 1: Test Health Endpoint (No Auth)**
 ```bash
-curl https://urchin-app-kmfvy.ondigitalocean.app/health
+curl https://astroengine.astrocorp.com/health
 ```
 
 **Expected:**
@@ -1376,7 +1397,7 @@ curl https://urchin-app-kmfvy.ondigitalocean.app/health
 
 **Step 2: Test Authentication**
 ```bash
-curl -X POST https://urchin-app-kmfvy.ondigitalocean.app/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
   -H "X-API-Key: YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"user_name":"Test","birth_date":"1990-05-15",...}'
@@ -1386,7 +1407,7 @@ curl -X POST https://urchin-app-kmfvy.ondigitalocean.app/lahiri/natal \
 
 **Step 3: Test Without API Key (Should Fail in Week 3+)**
 ```bash
-curl -X POST https://urchin-app-kmfvy.ondigitalocean.app/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
   -H "Content-Type: application/json" \
   -d '{...}'
 ```
@@ -1508,16 +1529,16 @@ Error: "latitude: Input should be less than or equal to 90"
 
 ```
 Production Base URL:
-https://urchin-app-kmfvy.ondigitalocean.app
+https://astroengine.astrocorp.com
 
 Health Check:
-https://urchin-app-kmfvy.ondigitalocean.app/health
+https://astroengine.astrocorp.com/health
 
 Auth Stats:
-https://urchin-app-kmfvy.ondigitalocean.app/auth/stats
+https://astroengine.astrocorp.com/auth/stats
 
 Error Codes:
-https://urchin-app-kmfvy.ondigitalocean.app/errors/codes
+https://astroengine.astrocorp.com/errors/codes
 
 API Documentation:
 See: docs/API_DOCUMENTATION.md in repository
@@ -1569,7 +1590,7 @@ See: docs/API_DOCUMENTATION.md in repository
 **Astro Engine is now LIVE and ready for all teams!**
 
 **Key Points:**
-- ✅ Production URL: `https://urchin-app-kmfvy.ondigitalocean.app`
+- ✅ Production URL: `https://astroengine.astrocorp.com`
 - ✅ Each team has unique API key
 - ✅ Rate limits configured per team
 - ✅ All 95+ endpoints available
@@ -1646,7 +1667,7 @@ See: docs/API_DOCUMENTATION.md in repository
 
 You can still monitor usage at:
 ```
-https://urchin-app-kmfvy.ondigitalocean.app/auth/stats
+https://astroengine.astrocorp.com/auth/stats
 ```
 
 **Use this to:**
