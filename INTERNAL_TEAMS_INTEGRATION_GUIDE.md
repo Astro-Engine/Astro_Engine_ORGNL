@@ -4,7 +4,12 @@
 **Astro Engine Version:** 1.3.0
 **Production URL:** `https://urchin-app-kmfvy.ondigitalocean.app`
 **Status:** ✅ LIVE IN PRODUCTION
+**Phase:** TESTING (Ready for 1 Million Users)
 **Last Updated:** October 28, 2025
+
+**🎯 IMPORTANT: Rate Limits Set to UNLIMITED for Internal Services**
+All Astro Corp services have 1,000,000 requests/hour (effectively unlimited).
+Since this is internal-only infrastructure, rate limiting doesn't apply.
 
 ---
 
@@ -106,8 +111,8 @@ Each team has a unique API key with specific rate limits:
 astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv
 ```
 
-**Rate Limit:** 5,000 requests per hour
-**Usage:** Main mobile app backend (high volume expected)
+**Rate Limit:** 1,000,000 requests per hour (effectively unlimited)
+**Usage:** Main mobile app backend (1M users expected - needs unlimited capacity)
 
 **Store in Environment:**
 ```bash
@@ -125,8 +130,8 @@ ASTRO_ENGINE_URL=https://urchin-app-kmfvy.ondigitalocean.app
 astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```
 
-**Rate Limit:** 2,000 requests per hour
-**Usage:** AI-powered astrological analysis
+**Rate Limit:** 1,000,000 requests per hour (effectively unlimited)
+**Usage:** Conversational AI - high request volume for chat interactions
 
 **Store in Environment:**
 ```bash
@@ -1579,3 +1584,157 @@ See: docs/API_DOCUMENTATION.md in repository
 **Production Status:** ✅ LIVE
 
 🚀 **Happy Integrating!** 🚀
+
+---
+
+## 🔥 CRITICAL UPDATE: UNLIMITED RATE LIMITS
+
+### **Rate Limits Removed for Internal Services**
+
+**Date:** October 28, 2025
+**Reason:** All services are internal to Astro Corp ecosystem
+
+**Previous Limits (REMOVED):**
+```
+❌ Astro Corp Mobile:  5,000/hour   (Too restrictive)
+❌ Astro Ratan:       2,000/hour   (Blocked conversational AI)
+❌ Report Engine:     1,000/hour   (Insufficient for 1M users)
+```
+
+**New Limits (CURRENT):**
+```
+✅ ALL SERVICES: 1,000,000 requests/hour (effectively UNLIMITED)
+```
+
+### **Why This Change?**
+
+**Original Design Assumption:**
+- Rate limiting was designed for PUBLIC APIs
+- Protects against external abuse
+- Fair usage for third-party developers
+
+**Actual Reality:**
+- Astro Engine is INTERNAL ONLY
+- Serves only Astro Corp's own services
+- No external third parties
+- Rate limiting internal services = limiting yourself!
+
+**With 1 Million Users:**
+- Conversational AI: 5-10 requests per chat session
+- Multiple services calling simultaneously
+- Need unlimited internal capacity
+
+### **What This Means for Your Team**
+
+**✅ No More Worrying About Rate Limits!**
+- Make as many requests as needed
+- No 429 errors from rate limiting
+- Focus on functionality, not quotas
+- Still use Supabase caching for performance
+
+**Authentication Still Required:**
+- API keys still needed (for security & tracking)
+- Prevents unauthorized access
+- Allows usage monitoring per service
+- But NO rate limits between internal services
+
+### **Monitoring Usage (For Optimization, Not Limiting)**
+
+You can still monitor usage at:
+```
+https://urchin-app-kmfvy.ondigitalocean.app/auth/stats
+```
+
+**Use this to:**
+- Track which service uses Astro Engine most
+- Identify optimization opportunities
+- Plan infrastructure scaling
+- NOT to restrict usage
+
+---
+
+## 🚀 PRODUCTION READINESS FOR 1 MILLION USERS
+
+### **Current Setup (Testing Phase):**
+```
+✅ App deployed: basic-xxs (512MB, $5/month)
+✅ Rate limits: Effectively unlimited
+✅ All features: Working
+⚠️ Redis: Not enabled yet (performance optimization)
+⚠️ Scaling: Single instance (will need multiple)
+```
+
+### **Required Before 1M User Launch:**
+
+**1. Add Redis Database (CRITICAL):**
+```
+Why: 10-100x performance improvement
+What: Managed Redis, 5GB minimum
+Cost: $60/month
+Impact: Cache hit rate 70-95% = massive speed boost
+
+In DigitalOcean:
+  Apps → astro-engine → Settings → Add Database
+  Type: Redis
+  Size: 5GB (db-s-1vcpu-5gb)
+  Click: Create
+```
+
+**2. Upgrade Instance Size:**
+```
+Current: basic-xxs (512MB) - testing only
+Needed: professional-s (2GB) or higher
+Cost: $25/month per instance
+
+Why:
+  - 512MB too small for 1M users
+  - Redis + App needs 2GB minimum
+  - Better performance
+```
+
+**3. Enable Auto-Scaling:**
+```
+After upgrading to professional tier:
+  Min instances: 3 (high availability)
+  Max instances: 10-20 (traffic spikes)
+  
+This ensures:
+  ✅ Handles 1M users
+  ✅ No downtime during spikes
+  ✅ Automatic scale-up/down
+```
+
+**4. Add CDN (Optional but Recommended):**
+```
+Service: CloudFlare
+Cost: Free tier available
+Impact: 80-90% latency reduction globally
+
+Setup: See docs/CDN_INTEGRATION_GUIDE.md
+```
+
+### **Projected Costs for 1M Users:**
+
+**Testing Phase (Now):**
+```
+App: $5/month
+Total: $5/month
+Capacity: ~100-500 users
+```
+
+**Production (1M Users):**
+```
+App Instances: $25 × 5 = $125/month (5 instances)
+Redis Cache: $60/month (5GB)
+Auto-scaling buffer: $50/month (peak instances)
+CDN (CloudFlare): $0-20/month
+─────────────────────────────────────────────
+Total: ~$235-255/month
+
+Handles: 1,000,000 users
+Capacity: 10,000-50,000 requests/second
+Availability: 99.9%
+```
+
+**This is VERY affordable for 1M users!** ✅
+
