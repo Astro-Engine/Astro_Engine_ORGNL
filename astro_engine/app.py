@@ -514,30 +514,151 @@ def create_app():
     # END BATCH ENDPOINT
     # =============================================================================
 
-    # Health check endpoint
+    # =============================================================================
+    # PHASE 22: ENHANCED HEALTH CHECKS
+    # =============================================================================
+
     @app.route('/health')
     def health_check():
-        """Health check endpoint for load balancers"""
+        """
+        Enhanced health check endpoint
+
+        Phase 22: Component-level health monitoring
+
+        Returns detailed health status of all components
+        """
+        components = {}
+        overall_healthy = True
+
+        # Check Swiss Ephemeris
         try:
-            # Test Swiss Ephemeris
             jd = swe.julday(2024, 1, 1)
             swe.calc_ut(jd, swe.SUN)
-            
-            return jsonify({
+            components['swiss_ephemeris'] = {
                 'status': 'healthy',
-                'timestamp': datetime.utcnow().isoformat(),
-                'version': '1.3.0',
-                'services': {
-                    'swiss_ephemeris': 'ok',
-                    'api_endpoints': 'ok'
-                }
-            }), 200
+                'message': 'Ephemeris calculations working'
+            }
         except Exception as e:
-            return jsonify({
+            components['swiss_ephemeris'] = {
                 'status': 'unhealthy',
-                'timestamp': datetime.utcnow().isoformat(),
                 'error': str(e)
-            }), 503
+            }
+            overall_healthy = False
+
+        # Check Redis Cache
+        if hasattr(app, 'cache_manager'):
+            if app.cache_manager.is_available():
+                stats = app.cache_manager.get_stats()
+                components['redis_cache'] = {
+                    'status': 'healthy',
+                    'hit_rate': stats.get('hit_rate', 0)
+                }
+            else:
+                components['redis_cache'] = {
+                    'status': 'degraded',
+                    'message': 'Cache unavailable, running without cache'
+                }
+                # Don't mark overall as unhealthy (graceful degradation)
+
+        # Check Circuit Breakers
+        try:
+            from astro_engine.circuit_breakers import get_all_breakers_status
+            breaker_status = get_all_breakers_status()
+            components['circuit_breakers'] = {
+                'status': 'healthy' if breaker_status['healthy'] else 'degraded',
+                'open_breakers': breaker_status['open_breakers']
+            }
+            if not breaker_status['healthy']:
+                overall_healthy = False
+        except:
+            pass
+
+        # Check Authentication
+        if hasattr(app, 'api_key_manager'):
+            components['authentication'] = {
+                'status': 'healthy',
+                'enabled': app.api_key_manager.is_enabled(),
+                'keys_configured': len(app.api_key_manager.valid_keys)
+            }
+
+        # System metrics
+        try:
+            import psutil
+            components['system'] = {
+                'status': 'healthy',
+                'cpu_percent': psutil.cpu_percent(interval=0.1),
+                'memory_percent': psutil.virtual_memory().percent,
+                'disk_percent': psutil.disk_usage('/').percent
+            }
+
+            # Warn if resources high
+            if components['system']['memory_percent'] > 90:
+                components['system']['status'] = 'warning'
+                components['system']['warning'] = 'High memory usage'
+
+        except:
+            pass
+
+        # Return comprehensive health status
+        status_code = 200 if overall_healthy else 503
+
+        return jsonify({
+            'status': 'healthy' if overall_healthy else 'unhealthy',
+            'timestamp': datetime.utcnow().isoformat(),
+            'version': '1.3.0',
+            'components': components,
+            'summary': {
+                'total_components': len(components),
+                'healthy_components': sum(1 for c in components.values() if c.get('status') == 'healthy'),
+                'overall_healthy': overall_healthy
+            }
+        }), status_code
+
+    @app.route('/health/live')
+    def liveness_check():
+        """
+        Liveness probe for Kubernetes
+
+        Phase 22, Module 22.5: Liveness vs Readiness
+
+        Simple check - is the app running?
+        """
+        return jsonify({'status': 'alive'}), 200
+
+    @app.route('/health/ready')
+    def readiness_check():
+        """
+        Readiness probe for Kubernetes
+
+        Phase 22, Module 22.5: Liveness vs Readiness
+
+        Detailed check - is the app ready to serve traffic?
+        """
+        ready = True
+
+        # Check critical dependencies
+        try:
+            jd = swe.julday(2024, 1, 1)
+            swe.calc_ut(jd, swe.SUN)
+        except:
+            ready = False
+
+        # Check circuit breakers
+        try:
+            from astro_engine.circuit_breakers import get_all_breakers_status
+            if not get_all_breakers_status()['healthy']:
+                ready = False
+        except:
+            pass
+
+        if ready:
+            return jsonify({'status': 'ready'}), 200
+        else:
+            return jsonify({'status': 'not_ready'}), 503
+
+    # =============================================================================
+    # END ENHANCED HEALTH CHECKS
+    # =============================================================================
     
     # Prometheus metrics endpoint
     @app.route('/metrics')
