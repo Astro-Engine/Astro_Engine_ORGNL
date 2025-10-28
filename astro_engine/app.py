@@ -58,7 +58,21 @@ def create_app():
     # Configuration
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
     app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
-    
+
+    # =============================================================================
+    # PHASE 18, MODULE 18.1: MAX CONTENT LENGTH
+    # =============================================================================
+
+    # Maximum request body size (prevents memory exhaustion attacks)
+    max_size_mb = int(os.getenv('MAX_REQUEST_SIZE_MB', '1'))  # 1 MB default
+    app.config['MAX_CONTENT_LENGTH'] = max_size_mb * 1024 * 1024
+
+    app.logger.info(f"✅ Request size limit configured: {max_size_mb} MB")
+
+    # =============================================================================
+    # END REQUEST SIZE LIMIT
+    # =============================================================================
+
     # CORS configuration
     cors_origins = os.getenv('CORS_ORIGINS', '*')
     if cors_origins != '*':
@@ -1124,6 +1138,37 @@ def create_app():
             'status': 'error',
             'request_id': g.get('request_id', 'unknown')
         }), 404
+
+    @app.errorhandler(413)
+    def request_too_large(error):
+        """
+        Handle 413 Request Entity Too Large
+
+        Phase 18, Module 18.3: Large payload rejection
+        """
+        max_size = app.config.get('MAX_CONTENT_LENGTH', 1048576)
+        max_size_mb = max_size / (1024 * 1024)
+
+        app.logger.warning(
+            f"Request too large rejected",
+            extra={
+                'max_size_mb': max_size_mb,
+                'request_id': g.get('request_id', 'unknown')
+            }
+        )
+
+        return jsonify({
+            'error': {
+                'code': 'REQUEST_TOO_LARGE',
+                'error_code': 413,
+                'message': f'Request body too large. Maximum size: {max_size_mb} MB',
+                'max_size_bytes': max_size,
+                'max_size_mb': max_size_mb,
+                'suggestion': 'Reduce request payload size or contact support for limit increase'
+            },
+            'status': 'error',
+            'request_id': g.get('request_id', 'unknown')
+        }), 413
 
     @app.errorhandler(500)
     def internal_error(error):
