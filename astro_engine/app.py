@@ -418,6 +418,28 @@ def create_app():
             except Exception as e:
                 app.logger.debug(f"Error adding rate limit headers: {e}")
 
+        # =============================================================================
+        # PHASE 16: HTTP CACHING HEADERS
+        # =============================================================================
+
+        # Add HTTP caching headers for successful calculation responses
+        if response.status_code == 200 and request.method == 'POST':
+            try:
+                from astro_engine.http_cache import add_cdn_headers
+
+                # Get request data for ETag generation
+                request_data = request.get_json() if hasattr(request, 'get_json') else None
+
+                # Add all caching headers
+                response = add_cdn_headers(response, request.path, request_data)
+
+            except Exception as e:
+                app.logger.debug(f"Error adding caching headers: {e}")
+
+        # =============================================================================
+        # END HTTP CACHING HEADERS
+        # =============================================================================
+
         return response
 
     # =============================================================================
