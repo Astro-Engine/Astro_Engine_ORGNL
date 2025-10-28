@@ -85,6 +85,19 @@ def process_batch_requests(requests: List[Dict[str, Any]], max_batch_size: int =
         req_data = req.get('data', {})
 
         try:
+            # CRITICAL: Validate each batch item's data before processing
+            from astro_engine.schemas.birth_data import BirthDataSchema
+            from pydantic import ValidationError
+
+            try:
+                # Validate birth data
+                validated_data = BirthDataSchema(**req_data)
+                req_data = validated_data.to_dict()
+
+            except ValidationError as e:
+                # Validation failed for this batch item
+                raise ValueError(f"Validation error: {e.errors()[0]['msg']}")
+
             # Process based on type
             result_data = process_single_calculation(req_type, req_data)
 
