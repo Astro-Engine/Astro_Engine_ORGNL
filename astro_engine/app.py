@@ -460,6 +460,40 @@ def create_app():
     # END AUTHENTICATION MIDDLEWARE
     # =============================================================================
 
+    # =============================================================================
+    # PHASE 20: BATCH REQUEST ENDPOINT
+    # =============================================================================
+
+    @app.route('/batch/calculate', methods=['POST'])
+    def batch_calculate():
+        """
+        Process multiple calculations in one request
+
+        Phase 20: Batch endpoint
+        """
+        try:
+            from astro_engine.batch_processor import process_batch_requests
+
+            data = request.get_json()
+            if not data or 'requests' not in data:
+                return jsonify({
+                    'error': 'Missing requests array',
+                    'format': '{"requests": [{"type": "natal", "data": {...}}]}'
+                }), 400
+
+            result = process_batch_requests(data['requests'], max_batch_size=10)
+            return jsonify(result), 200
+
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        except Exception as e:
+            logger.error(f"Batch error: {e}", exc_info=True)
+            return jsonify({'error': str(e)}), 500
+
+    # =============================================================================
+    # END BATCH ENDPOINT
+    # =============================================================================
+
     # Health check endpoint
     @app.route('/health')
     def health_check():
