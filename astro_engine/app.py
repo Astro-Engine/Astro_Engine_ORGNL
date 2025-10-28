@@ -845,6 +845,39 @@ def create_app():
     # END CIRCUIT BREAKER MONITORING
     # =============================================================================
 
+    # =============================================================================
+    # PHASE 12: REQUEST QUEUE MONITORING
+    # =============================================================================
+
+    @app.route('/queue/stats')
+    def queue_stats():
+        """
+        Get queue statistics
+
+        Phase 12, Module 12.3: Queue depth monitoring
+        """
+        try:
+            from astro_engine.queue_manager import create_queue_manager
+
+            queue_manager = create_queue_manager(app)
+            stats = queue_manager.get_queue_stats()
+
+            return jsonify({
+                'queue_stats': stats,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        except Exception as e:
+            return jsonify({
+                'error': 'Queue stats unavailable',
+                'message': str(e),
+                'enabled': False
+            }), 200  # Return 200 with disabled status
+
+    # =============================================================================
+    # END QUEUE MONITORING
+    # =============================================================================
+
     # Celery task management endpoints (Phase 4.1)
     @app.route('/tasks/submit', methods=['POST'])
     def submit_task():
