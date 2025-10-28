@@ -275,6 +275,22 @@ def create_app():
     else:
         app.logger.warning("⚠️  API Key authentication DISABLED - no keys configured")
 
+    # =============================================================================
+    # PHASE 14, MODULE 14.1: GRACEFUL SHUTDOWN HANDLERS
+    # =============================================================================
+
+    # Register signal handlers for graceful shutdown
+    try:
+        from astro_engine.shutdown_handler import register_shutdown_handlers
+        register_shutdown_handlers(app)
+        app.logger.info("✅ Graceful shutdown handlers registered (SIGTERM, SIGINT)")
+    except Exception as e:
+        app.logger.warning(f"⚠️  Could not register shutdown handlers: {e}")
+
+    # =============================================================================
+    # END GRACEFUL SHUTDOWN HANDLERS
+    # =============================================================================
+
     # Register blueprints
     app.register_blueprint(kp)  # KP System routes
     app.register_blueprint(bp)  # Lahiri Ayanamsa routes
