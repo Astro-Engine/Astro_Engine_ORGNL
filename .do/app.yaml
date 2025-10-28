@@ -24,18 +24,10 @@ services:
     # Application configuration
     http_port: 5000
 
-    # Instance sizing - Professional XS (2GB RAM, 1 vCPU)
-    # Recommended for production Vedic astrology calculations
-    instance_size_slug: professional-xs
+    # Instance sizing - Basic XXS (512MB RAM, shared CPU, $5/month)
+    # Can upgrade to professional-xs (1GB, $12/mo) or higher after testing
+    instance_size_slug: basic-xxs
     instance_count: 1
-
-    # Auto-scaling configuration
-    autoscaling:
-      min_instance_count: 1
-      max_instance_count: 5
-      metrics:
-        cpu:
-          percent: 70  # Scale up when CPU > 70%
 
     # Health check configuration
     health_check:
@@ -153,19 +145,11 @@ services:
       - key: AUTH_EXEMPT_ROUTES
         value: "/health,/metrics"
 
-    # Resource allocation
-    resources:
-      cpu_type: SHARED
-
-    # Routes configuration
-    routes:
-      - path: /
-        preserve_path_prefix: true
-
 # Managed Redis Database
 databases:
   - name: redis-cache
     engine: REDIS
+    cluster_name: astro-engine-redis
     version: "7"
     size: db-s-1vcpu-1gb  # 1GB RAM, 1 vCPU - $15/month
     production: true
