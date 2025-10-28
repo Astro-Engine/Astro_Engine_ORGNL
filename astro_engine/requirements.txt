@@ -1,16 +1,43 @@
-Flask>=2.0.0
-Flask-CORS>=3.0.0
-pyswisseph
-waitress>=2.0.0
-gunicorn>=20.0.0
-pytz>=2021.0
-python-dateutil>=2.8.0
-redis>=4.0.0
-Flask-Limiter>=2.0.0
-python-dotenv>=0.19.0
-requests>=2.25.0
-pybreaker>=1.4.0
-pydantic>=2.0.0
+# Core Framework
+Flask>=3.0.0
+Flask-CORS>=6.0.0
+Flask-Limiter>=4.0.0
 Flask-Compress>=1.20
+
+# Astrology Calculations
+pyswisseph>=2.10.0
+
+# Web Servers
+waitress>=3.0.0
+gunicorn>=23.0.0
+gevent>=25.0.0
+
+# Date/Time
+pytz>=2025.0
+python-dateutil>=2.9.0
+
+# Data & Validation
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Caching & Queue
+redis>=7.0.0
 rq>=2.6.0
+
+# Async Processing (optional)
+celery>=5.5.0
+kombu>=5.5.0
+flower>=2.0.0
+
+# Monitoring & Metrics
+prometheus-client>=0.23.0
+psutil>=7.0.0
+structlog>=25.0.0
+python-json-logger>=4.0.0
+
+# HTTP & Networking
+requests>=2.32.0
+
+# Reliability & Resilience
+pybreaker>=1.4.0
 tenacity>=9.0.0
