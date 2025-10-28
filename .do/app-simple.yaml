@@ -1,0 +1,59 @@
+# Simplified App Platform Spec for CLI Deployment
+# Without GitHub auto-deploy (can add later)
+
+name: astro-engine
+region: blr
+
+services:
+  - name: api
+    # Build from local Dockerfile (no GitHub needed initially)
+    dockerfile_path: Dockerfile
+    source_dir: /
+
+    http_port: 5000
+
+    # Instance size
+    instance_size_slug: basic-xxs
+    instance_count: 1
+
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+
+    # Environment variables
+    envs:
+      - key: FLASK_ENV
+        value: "production"
+
+      - key: FLASK_DEBUG
+        value: "false"
+
+      - key: AUTH_REQUIRED
+        value: "false"
+
+      - key: CACHE_ENABLED
+        value: "false"
+
+      - key: PYTHONPATH
+        value: "/app"
+
+      - key: EPHEMERIS_PATH
+        value: "/app/astro_engine/ephe"
+
+      - key: PORT
+        value: "5000"
+
+      # API Keys (you'll update these after deployment)
+      - key: VALID_API_KEYS
+        value: "astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv,astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I,astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO,astro_testing_PeqnsyOm9SEtG24vetc2ean9ldl4Z__S"
+        type: SECRET
+
+      - key: SECRET_KEY
+        value: "06ddb45cebda8f888c8b7d8df9105edc74b2fd4703650fc657d96ae905641eae"
+        type: SECRET
+
+# Note: Redis database removed for simpler initial deployment
+# Can add later via: doctl databases create
