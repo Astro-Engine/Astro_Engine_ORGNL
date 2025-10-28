@@ -310,6 +310,90 @@ def get_error_category(error_code: int) -> str:
         return "unknown"
 
 
+# =============================================================================
+# PHASE 17, MODULE 17.2: CLIENT-FRIENDLY ERROR MESSAGES
+# =============================================================================
+
+# Enhanced error messages with suggestions and examples
+ERROR_SUGGESTIONS = {
+    1010: {
+        'suggestion': 'Provide latitude between -90 and 90 degrees',
+        'example': 'latitude: 28.6139 (Delhi, India)'
+    },
+    1011: {
+        'suggestion': 'Provide longitude between -180 and 180 degrees',
+        'example': 'longitude: 77.2090 (Delhi, India)'
+    },
+    1012: {
+        'suggestion': 'Use YYYY-MM-DD format for birth date',
+        'example': 'birth_date: "1990-05-15"'
+    },
+    1013: {
+        'suggestion': 'Use HH:MM:SS format for birth time (24-hour)',
+        'example': 'birth_time: "14:30:00"'
+    },
+    1014: {
+        'suggestion': 'Provide timezone offset between -12 and 14 hours',
+        'example': 'timezone_offset: 5.5 (IST - India Standard Time)'
+    },
+    4001: {
+        'suggestion': 'Include X-API-Key header with valid API key',
+        'example': 'X-API-Key: astro_corp_backend_abc123...'
+    },
+    4029: {
+        'suggestion': 'Wait before making more requests or upgrade your tier',
+        'example': 'Retry after the time specified in retry_after field'
+    },
+}
+
+
+def get_error_details(error_code: int) -> dict:
+    """
+    Get complete error details including suggestions
+
+    Phase 17, Module 17.2: Enhanced error information
+
+    Args:
+        error_code: Numeric error code
+
+    Returns:
+        dict: Complete error information
+    """
+    return {
+        'code': error_code,
+        'message': get_error_message(error_code),
+        'category': get_error_category(error_code),
+        'http_status': get_http_status_code(error_code),
+        'suggestion': ERROR_SUGGESTIONS.get(error_code, {}).get('suggestion'),
+        'example': ERROR_SUGGESTIONS.get(error_code, {}).get('example')
+    }
+
+
+def get_all_error_codes() -> dict:
+    """
+    Get all error codes with details
+
+    Phase 17, Module 17.5: Error code API endpoint data
+
+    Returns:
+        dict: All error codes organized by category
+    """
+    codes_by_category = {
+        'validation': {},
+        'calculation': {},
+        'infrastructure': {},
+        'authentication': {},
+        'internal': {}
+    }
+
+    for code in ERROR_MESSAGES.keys():
+        category = get_error_category(code)
+        if category in codes_by_category:
+            codes_by_category[category][code] = get_error_details(code)
+
+    return codes_by_category
+
+
 # Critical Notes for Error Code System:
 #
 # 1. NEVER reuse error codes (maintain registry)

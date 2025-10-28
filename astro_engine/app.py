@@ -916,6 +916,63 @@ def create_app():
     # END QUEUE MONITORING
     # =============================================================================
 
+    # =============================================================================
+    # PHASE 17, MODULE 17.5: ERROR CODE API ENDPOINT
+    # =============================================================================
+
+    @app.route('/errors/codes')
+    def error_codes_list():
+        """
+        Get all error codes with details
+
+        Phase 17, Module 17.5: Error code documentation endpoint
+        """
+        try:
+            from astro_engine.error_codes import get_all_error_codes
+
+            codes = get_all_error_codes()
+
+            return jsonify({
+                'error_codes': codes,
+                'total_codes': sum(len(cat) for cat in codes.values()),
+                'categories': list(codes.keys()),
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        except Exception as e:
+            return jsonify({
+                'error': 'Error codes unavailable',
+                'message': str(e)
+            }), 500
+
+    @app.route('/errors/code/<int:code>')
+    def error_code_details(code: int):
+        """
+        Get details for specific error code
+
+        Phase 17, Module 17.5: Individual error code lookup
+        """
+        try:
+            from astro_engine.error_codes import get_error_details
+
+            details = get_error_details(code)
+
+            return jsonify({
+                'error_code': code,
+                'details': details,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        except Exception as e:
+            return jsonify({
+                'error': f'Error code {code} not found',
+                'message': str(e)
+            }), 404
+
+    # =============================================================================
+    # END ERROR CODE ENDPOINTS
+    # =============================================================================
+
     # Celery task management endpoints (Phase 4.1)
     @app.route('/tasks/submit', methods=['POST'])
     def submit_task():
