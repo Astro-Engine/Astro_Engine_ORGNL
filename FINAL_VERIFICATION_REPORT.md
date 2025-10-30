@@ -16,7 +16,7 @@
 ✅ Region: Bangalore, India (BLR1)
 ✅ Status: LIVE and HEALTHY
 ✅ URL 1: https://urchin-app-kmfvy.ondigitalocean.app (working)
-✅ URL 2: https://astroengine.astrocorp.com (configured, DNS propagating)
+✅ URL 2: https://astroengine.astrocorp.in (configured, DNS propagating)
 ✅ Instance: basic-xxs (512MB, $5/month)
 ✅ Auto-deploy: Enabled (from GitHub main branch)
 ```
@@ -81,7 +81,7 @@ Total: 4 API keys ready
 
 ```
 ✅ Domain: astrocorp.com (active)
-✅ Subdomain: astroengine.astrocorp.com (added)
+✅ Subdomain: astroengine.astrocorp.in (added)
 ✅ CNAME: Points to urchin-app-kmfvy.ondigitalocean.app
 ✅ Proxy: Enabled (orange cloud)
 ✅ SSL/HTTPS: Active
@@ -183,7 +183,7 @@ Test Coverage: 93% ✅
 
 ```
 ✅ Production URL: https://urchin-app-kmfvy.ondigitalocean.app
-✅ Custom URL: https://astroengine.astrocorp.com (will work in 5-30 min)
+✅ Custom URL: https://astroengine.astrocorp.in (will work in 5-30 min)
 ✅ All 95+ calculation endpoints
 ✅ Batch processing
 ✅ Async/webhook support

@@ -12,7 +12,7 @@
 
 ```
 Primary URL (CloudFlare):
-  https://astroengine.astrocorp.com
+  https://astroengine.astrocorp.in
   Status: ✅ Configured (DNS propagating)
 
 Backup URL (DigitalOcean):
@@ -50,12 +50,12 @@ Use for testing: Either URL (both work)
 ✅ Region: Bangalore, India
 ✅ Auto-deploy: Enabled (from GitHub)
 ✅ Health checks: Passing
-✅ Custom domain: astroengine.astrocorp.com (added)
+✅ Custom domain: astroengine.astrocorp.in (added)
 ```
 
 ### **2. CloudFlare CDN**
 ```
-✅ Domain: astroengine.astrocorp.com
+✅ Domain: astroengine.astrocorp.in
 ✅ Cache Rule 1: Cache calculations (/lahiri/, /kp/, /raman/)
 ✅ Cache Rule 2: Bypass monitoring (/health, /auth, /metrics)
 ✅ SSL/HTTPS: Automatic
@@ -117,7 +117,7 @@ Memory: 55% (healthy)
 **1. Update Your Code:**
 ```python
 # Add to .env file
-ASTRO_ENGINE_URL=https://astroengine.astrocorp.com  # Or use urchin-app URL
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.in  # Or use urchin-app URL
 ASTRO_ENGINE_API_KEY=your-team-api-key-here
 
 # Update HTTP client
@@ -200,7 +200,7 @@ Handles: 1,000,000+ users
 
 ### **This Week:**
 1. ✅ Wait for DNS propagation (5-30 minutes)
-2. ✅ Test custom domain: `curl https://astroengine.astrocorp.com/health`
+2. ✅ Test custom domain: `curl https://astroengine.astrocorp.in/health`
 3. ✅ Share INTERNAL_TEAMS_INTEGRATION_GUIDE.md with all teams
 4. ✅ Teams add API keys to their .env files
 5. ✅ Teams test integration
@@ -243,7 +243,7 @@ Ready for Teams: ✅ YES
 
 **Your teams can start integrating TODAY!**
 
-**Production URL:** `https://astroengine.astrocorp.com` (or backup URL)
+**Production URL:** `https://astroengine.astrocorp.in` (or backup URL)
 **Status:** ✅ Healthy
 **Capacity:** Ready for testing, scalable to 1M users
 

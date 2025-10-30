@@ -12,13 +12,13 @@
 
 **Document shows:**
 ```
-Primary URL: https://astroengine.astrocorp.com ✅
+Primary URL: https://astroengine.astrocorp.in ✅
 Backup URL: https://urchin-app-kmfvy.ondigitalocean.app ✅
 Both documented and explained
 ```
 
 **Occurrences verified:**
-- ✅ 23 references to custom domain (astroengine.astrocorp.com)
+- ✅ 23 references to custom domain (astroengine.astrocorp.in)
 - ✅ Header section: Both URLs shown
 - ✅ Code examples: All using custom domain
 - ✅ Environment variables: All using custom domain
@@ -58,7 +58,7 @@ Both documented and explained
 ### **4. Code Examples - VERIFIED ✅**
 
 **All code examples include:**
-- ✅ Correct base URL (astroengine.astrocorp.com)
+- ✅ Correct base URL (astroengine.astrocorp.in)
 - ✅ X-API-Key header
 - ✅ Error handling (401, 429, 400, 500)
 - ✅ Request ID tracking

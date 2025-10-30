@@ -4,7 +4,7 @@
 **Astro Engine Version:** 1.3.0
 
 **Production URLs:**
-- **Primary (Custom Domain):** `https://astroengine.astrocorp.com` ✅
+- **Primary (Custom Domain):** `https://astroengine.astrocorp.in` ✅
 - **Backup (DigitalOcean):** `https://urchin-app-kmfvy.ondigitalocean.app` ✅
 - **Both URLs work!** Use either one.
 
@@ -80,7 +80,7 @@ Astro Engine has undergone a **complete enterprise transformation** with 25 phas
 
 ```
 Primary URL (Custom Domain - CloudFlare CDN):
-  https://astroengine.astrocorp.com
+  https://astroengine.astrocorp.in
   Features: Global CDN, Edge caching, DDoS protection
   Status: ✅ CONFIGURED (DNS propagating)
 
@@ -90,10 +90,10 @@ Backup URL (DigitalOcean Direct):
   Status: ✅ WORKING NOW
 
 Both URLs work! Use either one.
-Recommended: Use custom domain (astroengine.astrocorp.com)
+Recommended: Use custom domain (astroengine.astrocorp.in)
 
 Region: Bangalore, India (blr)
-Health Check: https://astroengine.astrocorp.com/health
+Health Check: https://astroengine.astrocorp.in/health
 ```
 
 ### **Current Health Status**
@@ -139,7 +139,7 @@ astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv
 ```bash
 # Backend .env file
 ASTRO_ENGINE_API_KEY=astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv
-ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.in
 ```
 
 ---
@@ -158,7 +158,7 @@ astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```bash
 # Astro Ratan .env file
 ASTRO_ENGINE_API_KEY=astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
-ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.in
 ```
 
 ---
@@ -177,7 +177,7 @@ astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO
 ```bash
 # Report Engine .env file
 ASTRO_ENGINE_API_KEY=astro_report_engine_yz7XSPnoZCuirILeGXDmINjuXTeMedMO
-ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.in
 ```
 
 ---
@@ -243,7 +243,7 @@ pip install requests
 // astro-engine-client.ts
 import axios from 'axios';
 
-const ASTRO_ENGINE_URL = process.env.ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.com';
+const ASTRO_ENGINE_URL = process.env.ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.in';
 const API_KEY = process.env.ASTRO_ENGINE_API_KEY;
 
 export class AstroEngineClient {
@@ -365,7 +365,7 @@ from typing import Dict, Any
 
 class AstroEngineClient:
     def __init__(self):
-        self.base_url = os.getenv('ASTRO_ENGINE_URL', 'https://astroengine.astrocorp.com')
+        self.base_url = os.getenv('ASTRO_ENGINE_URL', 'https://astroengine.astrocorp.in')
         self.api_key = os.getenv('ASTRO_ENGINE_API_KEY')
 
         if not self.api_key:
@@ -475,7 +475,7 @@ def on_user_registration(user_data):
 **For Python (Recommended):**
 ```python
 # config.py or .env
-ASTRO_ENGINE_URL=https://astroengine.astrocorp.com
+ASTRO_ENGINE_URL=https://astroengine.astrocorp.in
 ASTRO_ENGINE_API_KEY=astro_astro_ratan_ZT-4TIVRlxzTNzIfk4Xz4w5U3djlDt-I
 ```
 
@@ -746,7 +746,7 @@ report = client.generate_comprehensive_report(user_uuid)
 
 ```javascript
 // astroEngineService.js
-const ASTRO_ENGINE_URL = process.env.REACT_APP_ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.com';
+const ASTRO_ENGINE_URL = process.env.REACT_APP_ASTRO_ENGINE_URL || 'https://astroengine.astrocorp.in';
 const API_KEY = process.env.REACT_APP_ASTRO_ENGINE_API_KEY;
 
 export const astroEngineService = {
@@ -855,7 +855,7 @@ GET /errors/codes         - All error codes
 
 ```javascript
 // admin-dashboard.js
-const ASTRO_ENGINE_URL = 'https://astroengine.astrocorp.com';
+const ASTRO_ENGINE_URL = 'https://astroengine.astrocorp.in';
 
 // Monitoring Dashboard
 async function fetchEngineStats() {
@@ -1037,7 +1037,7 @@ Header: X-API-Key: your-team-api-key
 
 **Example Request:**
 ```bash
-curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.in/lahiri/natal \
   -H "X-API-Key: astro_corp_backend_F5XpEFrnQI-NZHlRWZVmcHT0uDvoPVXv" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1146,7 +1146,7 @@ Use batch:
 **3. Monitor Your Usage:**
 ```javascript
 // Check your current usage
-const stats = await fetch('https://astroengine.astrocorp.com/auth/stats');
+const stats = await fetch('https://astroengine.astrocorp.in/auth/stats');
 const data = await stats.json();
 
 console.log('Success rate:', data.authentication.success_rate);
@@ -1258,7 +1258,7 @@ class AstroEngineClient:
     def __init__(self, api_key: Optional[str] = None):
         self.base_url = os.getenv(
             'ASTRO_ENGINE_URL',
-            'https://astroengine.astrocorp.com'
+            'https://astroengine.astrocorp.in'
         )
         self.api_key = api_key or os.getenv('ASTRO_ENGINE_API_KEY')
 
@@ -1387,7 +1387,7 @@ if __name__ == '__main__':
 
 **Step 1: Test Health Endpoint (No Auth)**
 ```bash
-curl https://astroengine.astrocorp.com/health
+curl https://astroengine.astrocorp.in/health
 ```
 
 **Expected:**
@@ -1397,7 +1397,7 @@ curl https://astroengine.astrocorp.com/health
 
 **Step 2: Test Authentication**
 ```bash
-curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.in/lahiri/natal \
   -H "X-API-Key: YOUR_API_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"user_name":"Test","birth_date":"1990-05-15",...}'
@@ -1407,7 +1407,7 @@ curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
 
 **Step 3: Test Without API Key (Should Fail in Week 3+)**
 ```bash
-curl -X POST https://astroengine.astrocorp.com/lahiri/natal \
+curl -X POST https://astroengine.astrocorp.in/lahiri/natal \
   -H "Content-Type: application/json" \
   -d '{...}'
 ```
@@ -1529,16 +1529,16 @@ Error: "latitude: Input should be less than or equal to 90"
 
 ```
 Production Base URL:
-https://astroengine.astrocorp.com
+https://astroengine.astrocorp.in
 
 Health Check:
-https://astroengine.astrocorp.com/health
+https://astroengine.astrocorp.in/health
 
 Auth Stats:
-https://astroengine.astrocorp.com/auth/stats
+https://astroengine.astrocorp.in/auth/stats
 
 Error Codes:
-https://astroengine.astrocorp.com/errors/codes
+https://astroengine.astrocorp.in/errors/codes
 
 API Documentation:
 See: docs/API_DOCUMENTATION.md in repository
@@ -1590,7 +1590,7 @@ See: docs/API_DOCUMENTATION.md in repository
 **Astro Engine is now LIVE and ready for all teams!**
 
 **Key Points:**
-- ✅ Production URL: `https://astroengine.astrocorp.com`
+- ✅ Production URL: `https://astroengine.astrocorp.in`
 - ✅ Each team has unique API key
 - ✅ Rate limits configured per team
 - ✅ All 95+ endpoints available
@@ -1667,7 +1667,7 @@ See: docs/API_DOCUMENTATION.md in repository
 
 You can still monitor usage at:
 ```
-https://astroengine.astrocorp.com/auth/stats
+https://astroengine.astrocorp.in/auth/stats
 ```
 
 **Use this to:**
