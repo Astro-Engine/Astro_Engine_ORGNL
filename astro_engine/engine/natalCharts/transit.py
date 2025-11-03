@@ -216,13 +216,41 @@ def get_nakshatra_and_pada(longitude):
     return 'Revati', 4 if longitude >= 346.6667 else 1
 
 def lahairi_tranist(data):
-    # Extract and validate inputs
-    latitude = float(data['latitude'])
-    longitude = float(data['longitude'])
-    timezone_offset = float(data['timezone_offset'])
+    """Calculate transit positions for current time based on birth data.
+    
+    Args:
+        data: Dictionary containing:
+            - birth_date: YYYY-MM-DD format
+            - birth_time: HH:MM:SS format
+            - latitude: -90 to 90
+            - longitude: -180 to 180
+            - timezone_offset: UTC offset in hours
+            - user_name: optional
+            
+    Returns:
+        Dictionary containing:
+            - user_name (if provided)
+            - birth_details (input data)
+            - transit_positions (planetary positions in natal format)
+            - natal_ascendant (birth chart ascendant)
+            - notes (ayanamsa values, transit time)
+            
+    Raises:
+        ValueError: If required fields are missing or invalid
+        Exception: For calculation errors
+    """
+    # Validate inputs
+    try:
+        latitude = float(data['latitude'])
+        longitude = float(data['longitude'])
+        timezone_offset = float(data['timezone_offset'])
+    except (KeyError, TypeError, ValueError) as e:
+        raise ValueError(f"Invalid input data: {str(e)}")
 
-    if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
-        raise ValueError("Invalid latitude or longitude")
+    if not (-90 <= latitude <= 90):
+        raise ValueError(f"Invalid latitude: {latitude}")
+    if not (-180 <= longitude <= 180):
+        raise ValueError(f"Invalid longitude: {longitude}")
 
     # Parse birth date and time
     birth_date = datetime.strptime(data['birth_date'], '%Y-%m-%d')
@@ -303,9 +331,9 @@ def lahairi_tranist(data):
     # Format current time
     current_utc_str = current_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # Construct response
+    # Construct response in natal-style format
     response = {
-        "user_name": data['user_name'],
+        "user_name": data.get('user_name'),
         "birth_details": {
             "birth_date": data['birth_date'],
             "birth_time": data['birth_time'],
@@ -314,8 +342,8 @@ def lahairi_tranist(data):
             "timezone_offset": timezone_offset
         },
         "transit_time": current_utc_str,
-        "natal_ascendant": ascendant_json,
-        "transit_positions": transit_positions_json,
+        "transit_positions": transit_positions_json,  # This becomes planetary_positions in batch response
+        "natal_ascendant": ascendant_json,          # This becomes ascendant in batch response
         "notes": {
             "ayanamsa": "Lahiri",
             "ayanamsa_value_birth": f"{ayanamsa_value_birth:.6f}",
