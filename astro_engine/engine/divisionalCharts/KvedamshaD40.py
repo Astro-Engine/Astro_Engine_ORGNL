@@ -124,7 +124,7 @@ def lahairi_Khavedamsha(birth_date, birth_time, latitude, longitude, tz_offset):
 
     # Prepare response
     response = {
-        "d40_ascendant": {
+        "ascendant": {
             "sign": d40_asc['sign'],
             "degrees": d40_asc['degrees'],
             "longitude": d40_asc['longitude'],

@@ -159,7 +159,7 @@ def lahairi_Dwadashamsha(birth_date, birth_time, latitude, longitude, timezone_o
 
     # Construct the response dictionary
     response = {
-        "d12_ascendant": d12_asc,
+        "ascendant": d12_asc,
         "planetary_positions": d12_positions,
         # "house_signs": house_signs,
         "notes": {

@@ -145,7 +145,7 @@ def lahairi_Shodashamsha(birth_date, birth_time, latitude, longitude, timezone_o
     house_signs = [{"house": i + 1, "sign": SIGNS[(d16_asc_sign_index + i) % 12]} for i in range(12)]
     response = {
         # "d1_ascendant": {"sign": d1_asc_sign, "degrees": format_dms(d1_asc_sidereal)},
-        "d16_ascendant": {
+        "ascendant": {
             "sign": d16_asc['sign'],
             "degrees": d16_asc['degrees'],
             "nakshatra": d16_asc['nakshatra'],

@@ -126,7 +126,7 @@ def lahairi_Chaturvimshamsha(birth_date, birth_time, latitude, longitude, tz_off
 
     # Response
     response = {
-        "d24_ascendant": {
+        "ascendant": {
             "sign": d24_asc['sign'],
             "degrees": d24_asc['degrees'],
             "longitude": d24_asc['longitude'],
