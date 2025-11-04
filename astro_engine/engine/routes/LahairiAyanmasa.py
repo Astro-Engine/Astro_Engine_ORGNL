@@ -371,46 +371,7 @@ def calculate_sudarshan_chakra():
         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
 
 
-
-# Hora (D-2)
-
-# @bp.route('/lahiri/calculate_d2_hora', methods=['POST'])
-# def calculate_d2_hora():
-#     """API endpoint to calculate the D2 Hora chart."""
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(field in data for field in required_fields):
-#             return jsonify({"error": "Missing required fields"}), 400
-
-#         user_name = data.get('user_name', 'Unknown')
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         latitude = float(data['latitude'])
-#         longitude = float(data['longitude'])
-#         tz_offset = float(data['timezone_offset'])
-
-#         # Call the calculation function
-#         result = lahairi_hora_chart(birth_date, birth_time, latitude, longitude, tz_offset)
-#         response = {
-#             'user_name': user_name,
-#             'd2_hora_chart': result,
-#             'metadata': {
-#                 'ayanamsa': 'Lahiri',
-#                 'house_system': 'Whole Sign',
-#                 'calculation_time': datetime.utcnow().isoformat(),
-#                 'input': data
-#             }
-#         }
-#         return jsonify(response), 200
-
-#     except Exception as e:
-#         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
-
-
+#  Hora (D-2)
 @bp.route('/lahiri/calculate_d2_hora', methods=['POST'])
 def calculate_d2_hora():
     """API endpoint to calculate the D2 Hora chart in natal-style response."""
@@ -793,6 +754,7 @@ def calculate_d24():
 
 @bp.route('/lahiri/calculate_d27', methods=['POST'])
 def calculate_d27_chart():
+
     try:
         data = request.get_json()
         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
@@ -1312,42 +1274,6 @@ def calculate_equal_bhava_lagna():
 # Arudha lagna
 
 @bp.route('/lahiri/calculate_arudha_lagna', methods=['POST'])
-# def calculate_arudha_lagna():
-#     """API endpoint to calculate Arudha Lagna chart with retrograde, nakshatras, and padas."""
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(field in data for field in required_fields):
-#             return jsonify({"error": "Missing required fields"}), 400
-
-#         user_name = data.get('user_name', 'Unknown')
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         latitude = float(data['latitude'])
-#         longitude = float(data['longitude'])
-#         tz_offset = float(data['timezone_offset'])
-
-#         # Call the calculation function
-#         result = lahairi_arudha_lagna(birth_date, birth_time, latitude, longitude, tz_offset)
-#         response = {
-#             'user_name': user_name,
-#             'arudha_lagna': result['arudha_lagna'],
-#             'planets': result['planets'],
-#             'metadata': {
-#                 'ayanamsa': 'Lahiri',
-#                 'calculation_time': datetime.utcnow().isoformat(),
-#                 'input': data
-#             }
-#         }
-#         return jsonify(response), 200
-
-#     except Exception as e:
-#         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
-
-
 def calculate_arudha_lagna():
     """API endpoint to calculate Arudha Lagna chart with retrograde, nakshatras, and padas."""
     try:
@@ -1537,8 +1463,6 @@ def lahiri_hora_calculate_hora_lagna_chart():
 
 
 
-
-
 # Chaldean Numerology
 @bp.route('/lahiri/chaldean_numerology', methods=['POST'])
 def numerology():
@@ -1648,10 +1572,9 @@ def lo_shu():
 def calculate_vimshottari_antar_dasha():
     """
     Calculate Vimshottari Mahadasha and Antardashas based on birth details.
-    
     Expected JSON Input:
     {
-        "user_name": "Anusha kayakokula",
+        "user_name": "user name",
         "birth_date": "1998-10-15",
         "birth_time": "10:40:30",
         "latitude": "17.3850",
