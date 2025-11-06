@@ -1,4 +1,5 @@
 from asyncio.log import logger
+import traceback
 from flask import Blueprint, json, make_response, request, jsonify
 from datetime import datetime, timedelta
 import logging
@@ -12,10 +13,22 @@ from astro_engine.engine.doshas.AgarakDosha import calculate_ascendant, calculat
 from astro_engine.engine.doshas.GuruChandalDosha import analyze_guru_chandal_dosha, calculate_chart
 from astro_engine.engine.doshas.SadiSatiDosha import ZODIAC_SIGNS, analyze_cancellation_factors, analyze_moon_strength, analyze_saturn_status, calculate_all_planets, calculate_dhaiya, calculate_houses_whole_sign, calculate_intensity, calculate_julian_day, calculate_sade_sati_status, get_ayanamsa, get_intensity_interpretation, get_personalized_recommendations, get_planet_house
 from astro_engine.engine.doshas.ShariptaDosha import ShrapitDoshaAnalyzer, VedicChart
+from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_remedies_for_planet_house
+from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MINIMUM_SHADBALA, SIGN_LORDS, gemstone_calculate_ascendant, gemstone_calculate_houses_whole_sign, gemstone_calculate_planetary_positions, gemstone_calculate_shadbala_simplified, gemstone_calculate_vimshottari_dasha, gemstone_classify_functional_nature, gemstone_get_current_dasha, gemstone_get_julian_day, gemstone_get_planet_house, gemstone_get_positional_strength, gemstone_get_ruled_houses, gemstone_recommend_gemstones_enhanced
+from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
+from astro_engine.engine.remedies.VedicRemedies import calculate_birth_chart_remedies
+from astro_engine.engine.remedies.VedicYantras import FUNCTIONAL_NATURE, calculate_shadbala, check_grahan_dosha, check_kaal_sarp_dosha, check_mangal_dosha, check_pitra_dosha, get_yantra_details, recommend_yantras
 from astro_engine.engine.yogas.BudhaAdhityaYoga import YogaCombinationAnalyzer, analyze_budha_aditya_yoga_with_combinations, calculate_planetary_positions_budha_aditya
 from astro_engine.engine.yogas.ChandraMangalYoga import analyze_chandra_mangal_yoga_formation, analyze_individual_planet_permutation, calculate_planetary_positions_chandra_mangal, calculate_yoga_strength, generate_comprehensive_analysis, get_classical_dignity
+from astro_engine.engine.yogas.DaridraYoga import EnhancedDaridraYogaCalculator, compute_core_from_birth, daridraYoga
+from astro_engine.engine.yogas.DhanYoga import dhanYoga
 from astro_engine.engine.yogas.GajakasariYoga import calculate_comprehensive_gaja_kesari_yoga, calculate_planetary_positions
 from astro_engine.engine.yogas.GuruMangalYoga import calculate_comprehensive_guru_mangal_yoga, calculate_planetary_positions_guru_mangal
+from astro_engine.engine.yogas.MaleficYogas import maleficYoga
+from astro_engine.engine.yogas.PachaMahapurushaYoga import compute_natal_core, format_planetary_positions_for_output, panchaMahapursha
+from astro_engine.engine.yogas.RajYoga import compute_chart, planetary_positions_json, rajYoga
+from astro_engine.engine.yogas.RareYogas import rareYogas
+from astro_engine.engine.yogas.SpecialYogas import addSpecialYogas
 
 
 
@@ -2749,6 +2762,7 @@ def guru_mangal_yoga():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
+
 @bp.route('/lahiri/guru-mangal-only', methods=['POST'])
 def guru_mangal_yoga_only():
     """Get only Guru Mangal Yoga analysis without full chart details"""
@@ -2852,103 +2866,9 @@ def budha_aditya_yoga():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# @bp.route('/budha-aditya-quick', methods=['POST'])
-# def budha_aditya_quick_check():
-#     """Quick check for Budha Aditya Yoga presence without detailed analysis"""
-#     try:
-#         birth_data = request.get_json()
-#         if not birth_data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(key in birth_data for key in required):
-#             return jsonify({"error": "Missing required parameters"}), 400
-
-#         # Calculate planetary positions
-#         sun_data, mercury_data, ascendant_data, _ = calculate_planetary_positions_budha_aditya(birth_data)
-
-#         # Quick check for yoga presence
-#         yoga_present = sun_data['sign'] == mercury_data['sign']
-        
-#         from budha_aditya_calculations import calculate_separation
-#         separation = calculate_separation(sun_data['longitude'], mercury_data['longitude'])
-#         is_combust = separation <= 8.5
-
-#         response = {
-#             "yoga_present": yoga_present,
-#             "sun_sign": sun_data['sign'],
-#             "mercury_sign": mercury_data['sign'],
-#             "same_sign": yoga_present,
-#             "sun_house": sun_data['house'],
-#             "mercury_house": mercury_data['house'],
-#             "separation_degrees": round(separation, 2),
-#             "mercury_combust": is_combust,
-#             "ascendant_sign": ascendant_data['sign'],
-#             "quick_assessment": "Yoga present but Mercury combust" if yoga_present and is_combust else
-#                               "Yoga present and Mercury not combust" if yoga_present and not is_combust else
-#                               "Yoga not present"
-#         }
-
-#         return jsonify(response)
-
-#     except ValueError as ve:
-#         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
-#     except Exception as e:
-#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
-# @app.route('/combustion-analysis', methods=['POST'])
-# def combustion_analysis_only():
-#     """Detailed combustion analysis between Sun and Mercury"""
-#     try:
-#         birth_data = request.get_json()
-#         if not birth_data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(key in birth_data for key in required):
-#             return jsonify({"error": "Missing required parameters"}), 400
-
-#         # Calculate planetary positions
-#         sun_data, mercury_data, _, _ = calculate_planetary_positions_budha_aditya(birth_data)
-
-#         from budha_aditya_calculations import analyze_combustion_permutations
-        
-#         # Detailed combustion analysis
-#         combustion_analysis = analyze_combustion_permutations(
-#             sun_data['longitude'], 
-#             mercury_data['longitude']
-#         )
-
-#         response = {
-#             "sun_position": {
-#                 "sign": sun_data['sign'],
-#                 "degrees": sun_data['degrees'],
-#                 "longitude": sun_data['longitude']
-#             },
-#             "mercury_position": {
-#                 "sign": mercury_data['sign'],
-#                 "degrees": mercury_data['degrees'],
-#                 "longitude": mercury_data['longitude'],
-#                 "retrograde": mercury_data['retrograde']
-#             },
-#             "combustion_analysis": combustion_analysis,
-#             "interpretation": {
-#                 "effect_on_mercury": f"Mercury's strength reduced by {combustion_analysis['strength_reduction_percent']}%" if combustion_analysis['is_combust'] else "Mercury retains full strength",
-#                 "communication_impact": "Impaired communication and analytical abilities" if combustion_analysis['is_combust'] else "Clear communication and sharp intellect",
-#                 "remedial_suggestion": "Perform Mercury remedies on Wednesdays" if combustion_analysis['is_combust'] else "No special remedies needed for combustion"
-#             }
-#         }
-
-#         return jsonify(response)
-
-#     except ValueError as ve:
-#         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
-#     except Exception as e:
-#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
+#
 
 #  Chandra Mangala Yoga
-
 
 @bp.route('/lahiri/chandra-mangal-yoga', methods=['POST'])
 def chandra_mangal_yoga():
@@ -3036,118 +2956,338 @@ def chandra_mangal_yoga():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# @app.route('/chandra-mangal-only', methods=['POST'])
-# def chandra_mangal_yoga_only():
-#     """Get only Chandra Mangal Yoga analysis without full planetary positions"""
-#     try:
-#         birth_data = request.get_json()
-#         if not birth_data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(key in birth_data for key in required):
-#             return jsonify({"error": "Missing required parameters"}), 400
-
-#         # Calculate planetary positions
-#         planetary_positions_json, asc_sign, _, _ = calculate_planetary_positions_chandra_mangal(birth_data)
-
-#         # Analyze only Moon and Mars
-#         moon_lon = planetary_positions_json['Moon']['longitude']
-#         mars_lon = planetary_positions_json['Mars']['longitude']
-#         moon_house = planetary_positions_json['Moon']['house']
-#         mars_house = planetary_positions_json['Mars']['house']
-        
-#         moon_analysis = analyze_individual_planet_permutation('Moon', moon_lon, moon_house, planetary_positions_json)
-#         mars_analysis = analyze_individual_planet_permutation('Mars', mars_lon, mars_house, planetary_positions_json)
-        
-#         # Check yoga formation
-#         formation_analysis = analyze_chandra_mangal_yoga_formation(moon_analysis, mars_analysis)
-        
-#         # Calculate strength if yoga is present
-#         strength_data = None
-#         if formation_analysis['yoga_present']:
-#             moon_dignity = get_classical_dignity(moon_lon, 'Moon')
-#             mars_dignity = get_classical_dignity(mars_lon, 'Mars')
-#             strength_data = calculate_yoga_strength(moon_lon, mars_lon, moon_dignity, mars_dignity)
-        
-#         # Generate comprehensive analysis
-#         comprehensive_analysis = generate_comprehensive_analysis(
-#             formation_analysis, moon_analysis, mars_analysis, strength_data
-#         )
-
-#         response = {
-#             "ascendant_sign": asc_sign,
-#             "moon_details": {
-#                 "sign": planetary_positions_json['Moon']['sign'],
-#                 "house": planetary_positions_json['Moon']['house'],
-#                 "degrees": planetary_positions_json['Moon']['degrees'],
-#                 "dignity": planetary_positions_json['Moon']['dignity']
-#             },
-#             "mars_details": {
-#                 "sign": planetary_positions_json['Mars']['sign'], 
-#                 "house": planetary_positions_json['Mars']['house'],
-#                 "degrees": planetary_positions_json['Mars']['degrees'],
-#                 "dignity": planetary_positions_json['Mars']['dignity']
-#             },
-#             "chandra_mangal_yoga_analysis": comprehensive_analysis
-#         }
-
-#         return jsonify(response)
-
-#     except ValueError as ve:
-#         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
-#     except Exception as e:
-#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
-# @app.route('/planetary-positions', methods=['POST'])
-# def get_planetary_positions_only():
-#     """Get basic planetary positions without yoga analysis"""
-#     try:
-#         birth_data = request.get_json()
-#         if not birth_data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(key in birth_data for key in required):
-#             return jsonify({"error": "Missing required parameters"}), 400
-
-#         # Calculate planetary positions
-#         planetary_positions_json, asc_sign, ascendant_lon, ayanamsa_value = calculate_planetary_positions_chandra_mangal(birth_data)
-
-#         # Parse birth time for response
-#         birth_time = datetime.strptime(birth_data['birth_time'], '%H:%M:%S').time()
-
-#         response = {
-#             "birth_details": {
-#                 "birth_date": birth_data['birth_date'],
-#                 "birth_time": birth_time.strftime('%H:%M:%S'),
-#                 "latitude": float(birth_data['latitude']),
-#                 "longitude": float(birth_data['longitude']),
-#                 "timezone_offset": float(birth_data['timezone_offset'])
-#             },
-#             "planetary_positions": planetary_positions_json,
-#             "ascendant": {
-#                 "sign": asc_sign,
-#                 "degrees": format_dms(ascendant_lon % 30)
-#             },
-#             "calculation_notes": {
-#                 "ayanamsa": "Lahiri",
-#                 "ayanamsa_value": f"{ayanamsa_value:.6f}",
-#                 "house_system": "Whole Sign",
-#                 "dignity_system": "Classical 3-state system (Own/Exalted/Debilitated for Moon & Mars)",
-#                 "sidereal_zodiac": True
-#             }
-#         }
-
-#         return jsonify(response)
-
-#     except ValueError as ve:
-#         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
-#     except Exception as e:
-#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
+#  Raja Yoga
 
+@bp.route('/lahiri/raj-yoga', methods=['POST'])
+def RajYoga_chart():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        if not all(k in data for k in required):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # ---- CALCULATIONS (delegated) ----
+        chart = compute_chart(data)
+        asc_sign = chart["asc_sign"]
+        asc_lon = chart["asc_lon"]
+        asc_sign_index = chart["asc_sign_index"]
+        planet_positions = chart["planet_positions"]
+        planet_houses = chart["planet_houses"]
+        house_lords = chart["house_lords"]
+        house_signs = chart["house_signs"]
+        ayanamsa_value = chart["ayanamsa_value"]
+
+        # Raj Yoga analysis via public wrapper
+        yogas = rajYoga(planet_positions, planet_houses, house_lords, asc_sign, asc_sign_index)
+
+        # Build response JSON (same shape as before)
+        planetary_json = planetary_positions_json(planet_positions, planet_houses)
+
+        # Summary stats
+        total_yogas = len(yogas)
+        avg_strength = round(sum(y.get('strength', 0) for y in yogas) / total_yogas, 2) if total_yogas else 0.0
+
+        priority_counts = {
+            "very_strong": len([y for y in yogas if y.get('priority') == 'Very Strong']),
+            "strong": len([y for y in yogas if y.get('priority') == 'Strong']),
+            "moderate": len([y for y in yogas if y.get('priority') == 'Moderate'])
+        }
+
+        type_counts = {}
+        for y in yogas:
+            t = y['type']
+            type_counts[t] = type_counts.get(t, 0) + 1
+
+        response = {
+            "user_name": data['user_name'],
+            "birth_details": {
+                "birth_date": data['birth_date'],
+                "birth_time": data['birth_time'],
+                "latitude": float(data['latitude']),
+                "longitude": float(data['longitude']),
+                "timezone_offset": float(data['timezone_offset'])
+            },
+            "planetary_positions": planetary_json,
+            "ascendant": {
+                "sign": asc_sign,
+                "degrees": format_dms(asc_lon % 30),
+                "longitude": round(asc_lon, 4)
+            },
+            "house_signs": house_signs,
+            "house_lords": {f"House {i}": lord for i, lord in house_lords.items()},
+            "raj_yogas": {
+                "total_count": total_yogas,
+                "average_strength": avg_strength,
+                "priority_distribution": priority_counts,
+                "type_distribution": type_counts,
+                "yogas": yogas
+            },
+            "notes": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": f"{ayanamsa_value:.6f}",
+                "chart_type": "Rasi (D1)",
+                "house_system": "Whole Sign",
+                "yoga_analysis": "Complete Classical Raj Yogas (8 types)",
+                "connection_types": "Conjunction, Parivartana, Mutual Aspects",
+                "validations": "8th lord handling, combustion, papa kartari (waning Moon only), strength model with malefic/node proximity penalties",
+                "implementation": "Full-sign dignity; DKRY with conjunction/mutual aspect/exchange; Adhi with malefic guard; Yogakaraka placement rule"
+            }
+        }
+
+        return jsonify(response)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except RuntimeError as re:
+        return jsonify({"error": str(re)}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+#  PunchaMahapursha Yoga
+
+@bp.route('/lahiri/pancha-mahapurusha-yogas', methods=['POST'])
+def pancha_mahapurusha_yogas():
+    """
+    Calculate Pancha Mahapurusha Yogas based on natal chart data.
+    Logic preserved; uses panchaMahapursha(...) from the calc module.
+    """
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        if not all(key in birth_data for key in required):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # ---- calculations (delegated, unchanged) ----
+        core = compute_natal_core(birth_data)
+
+        orientation_shift = int(birth_data.get('orientation_shift', 0))
+        planetary_positions_formatted = format_planetary_positions_for_output(
+            core["planet_positions"], core["asc_sign_index"], orientation_shift=orientation_shift
+        )
+
+        detected_yogas = panchaMahapursha(planetary_positions_formatted)
+
+        response = {
+            "user_name": birth_data['user_name'],
+            "birth_details": {
+                "birth_date": birth_data['birth_date'],
+                "birth_time": birth_data['birth_time'],
+                "latitude": float(birth_data['latitude']),
+                "longitude": float(birth_data['longitude']),
+                "timezone_offset": float(birth_data['timezone_offset'])
+            },
+            "yoga_analysis": {
+                "total_yogas_found": len(detected_yogas),
+                "detected_yogas": detected_yogas,
+                "yoga_summary": [y['yoga_name'] for y in detected_yogas] if detected_yogas else "No Pancha Mahapurusha Yogas detected"
+            },
+            "planetary_positions": planetary_positions_formatted,
+            "calculation_notes": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": f"{core['ayanamsa_value']:.6f}",
+                "house_system": "Whole Sign",
+                "yoga_rules": "Planet in own sign or exaltation + Kendra house (1,4,7,10)",
+                "chart_type": "Sidereal Vedic"
+            }
+        }
+        return jsonify(response)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except RuntimeError as re:
+        return jsonify({"error": str(re)}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+#  Daridra Yoga
+
+@bp.route('/lahiri/daridra-analysis', methods=['POST'])
+def enhanced_daridra_analysis():
+    """Complete Daridra Yoga analysis: now returns remedial_measures from calc module."""
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        if not all(key in birth_data for key in required):
+            return jsonify({"error": f"Missing required parameters. Required: {required}"}), 400
+
+        core = compute_core_from_birth(birth_data)
+
+        result = daridraYoga(
+            planetary_data=core["planetary_data"],
+            ascendant_sign=core["asc_sign"],
+            jd_ut=core["jd_ut"],
+            latitude=core["latitude"],
+            longitude=core["longitude"]
+        )
+        analysis = result["daridra_yoga_analysis"]
+        remedial_measures = result["remedial_measures"]
+
+        # build house lords exactly as before (no logic change)
+        house_lords = EnhancedDaridraYogaCalculator(
+            planetary_data=core["planetary_data"],
+            ascendant_sign=core["asc_sign"],
+            jd_ut=core["jd_ut"],
+            latitude=core["latitude"],
+            longitude=core["longitude"]
+        ).house_lords
+
+        response = {
+            "user_name": birth_data['user_name'],
+            "birth_details": {
+                "birth_date": birth_data['birth_date'],
+                "birth_time": birth_data['birth_time'],
+                "latitude": core["latitude"],
+                "longitude": core["longitude"],
+                "timezone_offset": core["timezone_offset"]
+            },
+            "ascendant": {
+                "sign": core["asc_sign"],
+                "longitude": round(core["ascendant_lon"], 8)
+            },
+            "planetary_positions": {
+                planet: {
+                    "sign": data['sign'],
+                    "degree_in_sign": round(data['degree_in_sign'], 2),
+                    "house": data['house'],
+                    "retrograde": data['retrograde']
+                }
+                for planet, data in core["planetary_data"].items()
+            },
+            "house_lords": {str(house): lord for house, lord in house_lords.items()},
+            "daridra_yoga_analysis": analysis,
+            "remedial_measures": remedial_measures,
+            "calculation_details": {
+                "ayanamsa": "Lahiri",
+                "ayanamsa_value": round(core["ayanamsa_value"], 6),
+                "house_system": "Whole Sign",
+                "coordinate_system": "Sidereal",
+                "calculation_time_ut": core["ut_datetime"].isoformat(),
+                "julian_day": round(core["jd_ut"], 6)
+            }
+        }
+        return jsonify(response)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except RuntimeError as re:
+        return jsonify({"error": str(re)}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+#  Dhan YOga 
+
+@bp.route('/lahiri/dhan-yoga-analysis', methods=['POST'])
+def dhan_yoga_analysis():
+    """
+    Thin API wrapper: parses JSON, calls calculations.dhanYoga(birth_data),
+    returns the exact response the original endpoint produced.
+    """
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        # delegate to the calculations function (unchanged calculations)
+        result = dhanYoga(birth_data)
+        return jsonify(result)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except RuntimeError as re:
+        return jsonify({"error": str(re)}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+#  Malefic Yogas
+
+@bp.route('/lahiri/malefic_yogas', methods=['POST'])
+def malefic_yogas_endpoint():
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        if not all(key in birth_data for key in required):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # Validate coordinates (kept identical to original behavior)
+        latitude = float(birth_data['latitude'])
+        longitude = float(birth_data['longitude'])
+        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+            return jsonify({"error": "Invalid latitude or longitude"}), 400
+
+        # Delegate to calculations (no logic changes)
+        result = maleficYoga(birth_data)
+        return jsonify(result)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+#  Rare Yogas 
+
+@bp.route('/lahiri/yoga-analysis', methods=['POST'])
+def yoga_analysis():
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        # Delegate to calculations (exact same logic wrapped in rareYogas)
+        result = rareYogas(birth_data)
+        return jsonify(result)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+#  Special Yogas
+
+@bp.route('/lahiri/special-yogas', methods=['POST'])
+def special_yogas_endpoint():
+    try:
+        birth_data = request.get_json()
+        if not birth_data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        if not all(key in birth_data for key in required):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # Delegate to the pure calculation function (keeps all your calculations intact)
+        result = addSpecialYogas(birth_data)
+        return jsonify(result)
+
+    except ValueError as ve:
+        return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
+    except RuntimeError as re:
+        return jsonify({"error": str(re)}), 500
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
 
@@ -3562,4 +3702,515 @@ def calculate_sade_sati_endpoint():
             'error': 'Calculation Failed',
             'details': str(e)
         }), 500
+
+
+
+
+
+
+# *********************************************************************************************************************
+# ***********************************       Remedies        ***********************************************    
+# *********************************************************************************************************************
+
+
+#  Yantras in vedic astrology
+
+
+@bp.route('/api/yantra-recommendations', methods=['POST'])
+def yantra_recommendations():
+    """Main API endpoint for yantra recommendations"""
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Convert data
+        birth_data = {
+            'birth_date': data['birth_date'],
+            'birth_time': data['birth_time'],
+            'timezone_offset': float(data['timezone_offset']),
+            'user_name': data.get('user_name', 'User')
+        }
+        
+        # Extract lat/lon as separate parameters
+        lat = float(data['latitude'])
+        lon = float(data['longitude'])
+        
+        # Step 1: Calculate birth chart WITH lat and lon as separate parameters
+        chart = calculate_birth_chart(birth_data, lat, lon)
+        
+        # Step 2: Calculate Shadbala
+        shadbala = calculate_shadbala(chart)
+        
+        # Step 3: Check doshas
+        doshas = {
+            'mangal_dosha': check_mangal_dosha(chart),
+            'kaal_sarp_dosha': check_kaal_sarp_dosha(chart),
+            'pitra_dosha': check_pitra_dosha(chart),
+            'grahan_dosha': check_grahan_dosha(chart)
+        }
+        
+        # Step 4: Calculate dasha
+        dasha = calculate_vimshottari_dasha(chart, birth_data['birth_date'])
+        
+        # Step 5: Get yantra recommendations (CORRECTED LOGIC)
+        recommendations = recommend_yantras(chart, shadbala, doshas, dasha, birth_data['birth_date'])
+        
+        # Add yantra details to top recommendations
+        top_recommendations = []
+        for rec in recommendations[:3]:
+            yantra_details = get_yantra_details(rec['planet'])
+            rec['yantra_details'] = yantra_details
+            top_recommendations.append(rec)
+        
+        # Prepare response
+        response = {
+            'user_name': birth_data['user_name'],
+            'birth_details': {
+                'date': birth_data['birth_date'],
+                'time': birth_data['birth_time'],
+                'location': f"{lat}, {lon}"
+            },
+            'ascendant': chart['ascendant'],
+            'functional_nature': FUNCTIONAL_NATURE.get(chart['ascendant']['sign'], {}),
+            'current_dasha': dasha.get('current_mahadasha') if dasha else None,
+            'doshas_detected': {
+                'mangal_dosha': doshas['mangal_dosha']['present'],
+                'kaal_sarp_dosha': doshas['kaal_sarp_dosha']['present'],
+                'pitra_dosha': doshas['pitra_dosha']['present'],
+                'grahan_dosha': doshas['grahan_dosha']['present']
+            },
+            'yantra_recommendations': top_recommendations,
+            'all_recommendations_count': len(recommendations),
+            'planetary_strengths': shadbala,
+            'detailed_analysis': {
+                'chart': chart,
+                'doshas': doshas,
+                'dasha': dasha
+            }
+        }
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+#  Mantras for vedic astrology
+
+@bp.route('/lahiri/mantra-analysis', methods=['POST'])
+def mantra_analysis():
+    """Main API endpoint for comprehensive mantra analysis"""
+    try:
+        data = request.json
+        
+        required_fields = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+        
+        user_name = data.get('user_name')
+        birth_date = data.get('birth_date')
+        birth_time = data.get('birth_time')
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        timezone_offset = float(data.get('timezone_offset'))
+        
+        birth_jd = get_julian_day(birth_date, birth_time, timezone_offset)
+        current_jd = get_current_julian_day()
+        
+        chart, ayanamsa = calculate_birth_chart(birth_jd, latitude, longitude)
+        
+        moon_longitude = chart['Moon']['longitude']
+        moon_nakshatra = calculate_nakshatra(moon_longitude)
+        
+        analysis = analyze_chart_for_mantras(
+            chart, current_jd, latitude, longitude, birth_jd, moon_longitude, birth_date
+        )
+        
+        response = {
+            'status': 'success',
+            'user_name': user_name,
+            'birth_details': {
+                'date': birth_date,
+                'time': birth_time,
+                'latitude': latitude,
+                'longitude': longitude,
+                'timezone_offset': timezone_offset,
+                'julian_day': round(birth_jd, 6),
+                'ayanamsa': round(ayanamsa, 6),
+                'chart_type': 'Sidereal (Lahiri Ayanamsa)',
+                'house_system': 'Whole Sign'
+            },
+            'chart_summary': {
+                'ascendant': f"{chart['Ascendant']['degree']:.2f}° {chart['Ascendant']['sign']}",
+                'moon_sign': chart['Moon']['sign'],
+                'moon_nakshatra': moon_nakshatra['name'],
+                'sun_sign': chart['Sun']['sign']
+            },
+            'planetary_positions': {
+                planet: {
+                    'sign': chart[planet]['sign'],
+                    'degree': round(chart[planet]['degree'], 2),
+                    'longitude': round(chart[planet]['longitude'], 2),
+                    'house': chart[planet]['house'],
+                    'retrograde': chart[planet].get('retrograde', False)
+                }
+                for planet in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
+            },
+            'mantra_analysis': analysis,
+            'system_info': {
+                'version': '3.0 - CORRECTED & COMPLETE',
+                'corrections_applied': [
+                    'FIXED: Aspect calculation formula (critical fix)',
+                    'FIXED: Mangal Dosha from Lagna, Moon, AND Venus',
+                    'FIXED: Kaal Sarp using longitude-based hemming (more precise)',
+                    'FIXED: All Jupiter and Saturn aspect calculations',
+                    'ADDED: Anulom vs Pratilom KSD detection',
+                    'ADDED: Multiple cancellation rules',
+                    'ADDED: Detailed aspect information'
+                ],
+                'features': [
+                    'Complete Mangal Dosha (3 reference points + 9 cancellations)',
+                    'Complete Kaal Sarp Dosha (longitude-based + 5 cancellations)',
+                    'Complete Pitra Dosha (8 indicators + 5 cancellations)',
+                    'Corrected aspect calculations for all planets',
+                    'Conjunction detection with orbs',
+                    'Age-based cancellations',
+                    'Vimshottari Dasha system'
+                ]
+            }
+        }
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({
+            'status': 'error',
+            'message': str(ve)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Internal server error: {str(e)}'
+        }), 500
+
+
+
+#  Vedic remedies
+
+@bp.route('/lahiri/vedic_remedies', methods=['POST'])
+def calculate_endpoint():
+    """✅ Calculate endpoint"""
+    try:
+        data = request.get_json()
+        
+        required = ['user_name', 'birth_date', 'birth_time', 
+                   'latitude', 'longitude', 'timezone_offset']
+        
+        missing = [f for f in required if f not in data]
+        if missing:
+            return jsonify({
+                'success': False,
+                'error': f'Missing required fields: {", ".join(missing)}'
+            }), 400
+        
+        result = calculate_birth_chart_remedies(data)
+        
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logging.error(f"Endpoint error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+#  Gemestones in vedic astrology
+
+@bp.route('/lahiri/calculate-gemstone', methods=['POST'])
+def calculate_gemstone():
+    """Main endpoint for gemstone calculation"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Extract data
+        user_name = data['user_name']
+        birth_date = data['birth_date']
+        birth_time = data['birth_time']
+        latitude = float(data['latitude'])
+        longitude = float(data['longitude'])
+        timezone_offset = float(data['timezone_offset'])
+        
+        # Optional: recommendation approach
+        approach = data.get('approach', 'balanced')  # classical, modern, balanced
+        
+        # Calculate Julian Day
+        jd = gemstone_get_julian_day(birth_date, birth_time, timezone_offset)
+        
+        # Calculate Ascendant
+        asc_longitude, asc_sign = gemstone_calculate_ascendant(jd, latitude, longitude)
+        asc_lord = SIGN_LORDS[asc_sign]
+        
+        # Calculate Houses (Whole Sign)
+        houses = gemstone_calculate_houses_whole_sign(asc_sign)
+        
+        # Calculate Planetary Positions
+        planetary_positions, ayanamsa = gemstone_calculate_planetary_positions(jd)
+        
+        # Analyze each planet
+        planets_analysis = {}
+        
+        for planet_name, planet_data in planetary_positions.items():
+            # Add house placement
+            planet_data['house'] = gemstone_get_planet_house(planet_data['sign'], asc_sign)
+            
+            # Get ruled houses
+            ruled_houses = gemstone_get_ruled_houses(planet_name, asc_sign)
+            
+            # Calculate Shadbala
+            shadbala = gemstone_calculate_shadbala_simplified(planet_name, planet_data, asc_sign)
+            min_strength = MINIMUM_SHADBALA.get(planet_name, 300)
+            is_weak = shadbala < min_strength
+            strength_pct = round((shadbala / min_strength) * 100, 1)
+            
+            # Functional nature
+            functional_nature, reasons = gemstone_classify_functional_nature(planet_name, ruled_houses, asc_sign)
+            
+            # Positional status
+            pos_strength, pos_status = gemstone_get_positional_strength(
+                planet_name,
+                planet_data['sign'],
+                planet_data['degree_in_sign']
+            )
+            
+            house_sigs = [HOUSE_SIGNIFICATIONS[h] for h in ruled_houses]
+            
+            planets_analysis[planet_name] = {
+                'position': planet_data,
+                'ruled_houses': ruled_houses,
+                'functional_nature': functional_nature,
+                'functional_reasons': reasons,
+                'positional_status': pos_status,
+                'positional_strength': round(pos_strength, 2),
+                'shadbala': shadbala,
+                'minimum_required': min_strength,
+                'is_weak': is_weak,
+                'strength_percentage': strength_pct,
+                'house_significations': house_sigs
+            }
+        
+        # Calculate Dasha
+        moon_longitude = planetary_positions['Moon']['longitude']
+        dasha_timeline, birth_nakshatra = gemstone_calculate_vimshottari_dasha(moon_longitude, birth_date)
+        current_dasha = gemstone_get_current_dasha(dasha_timeline)
+        
+        # Generate Recommendations (ENHANCED)
+        recommendations, avoid_list, compatibility = gemstone_recommend_gemstones_enhanced(
+            planets_analysis,
+            current_dasha,
+            asc_sign,
+            asc_lord,
+            approach=approach
+        )
+        
+        # Response
+        response = {
+            'status': 'success',
+            'calculation_details': {
+                'ayanamsa_used': 'Lahiri',
+                'ayanamsa_value': round(ayanamsa, 6),
+                'house_system': 'Whole Sign',
+                'zodiac': 'Sidereal',
+                'recommendation_approach': approach,
+                'version': '3.0-ENHANCED'
+            },
+            'user_details': {
+                'name': user_name,
+                'birth_date': birth_date,
+                'birth_time': birth_time,
+                'latitude': latitude,
+                'longitude': longitude,
+                'timezone_offset': timezone_offset
+            },
+            'chart_details': {
+                'ascendant': {
+                    'sign': SIGNS[asc_sign],
+                    'sign_number': asc_sign,
+                    'degree': round(asc_longitude % 30, 4),
+                    'longitude': round(asc_longitude, 4),
+                    'lord': asc_lord
+                },
+                'planetary_positions': {
+                    planet: {
+                        'sign': data['position']['sign_name'],
+                        'degree': round(data['position']['degree_in_sign'], 4),
+                        'house': data['position']['house'],
+                        'retrograde': data['position'].get('retrograde', False),
+                        'positional_status': data['positional_status'],
+                        'positional_strength': data['positional_strength']
+                    }
+                    for planet, data in planets_analysis.items()
+                },
+                'houses': houses
+            },
+            'planetary_strength_analysis': {
+                planet: {
+                    'ruled_houses': data['ruled_houses'],
+                    'functional_nature': data['functional_nature'],
+                    'functional_reasons': data['functional_reasons'],
+                    'positional_status': data['positional_status'],
+                    'positional_strength': data['positional_strength'],
+                    'shadbala_strength': data['shadbala'],
+                    'minimum_required': data['minimum_required'],
+                    'strength_percentage': data['strength_percentage'],
+                    'is_weak': data['is_weak'],
+                    'house_significations': data['house_significations']
+                }
+                for planet, data in planets_analysis.items()
+            },
+            'dasha_details': {
+                'birth_nakshatra': birth_nakshatra + 1,
+                'birth_nakshatra_lord': planetary_positions['Moon'],
+                'current_maha_dasha': current_dasha,
+                'dasha_timeline': dasha_timeline[:5]
+            },
+            'gemstone_recommendations': {
+                'primary_recommendations': recommendations,
+                'gemstones_to_avoid': avoid_list,
+                'compatibility_notes': compatibility,
+                'approach_used': approach,
+                'approach_explanation': {
+                    'classical': 'Traditional Parashari rules - Avoid all dusthana lords (6th, 8th, 12th)',
+                    'modern': 'Support current dasha lord even if malefic - with strong warnings',
+                    'balanced': 'Balanced approach - Consider dasha lords with comprehensive warnings'
+                }[approach],
+                'general_guidelines': [
+                    "✓ Always wear natural, untreated, eye-clean gemstones",
+                    "✓ Gemstone should touch the skin (open-back setting)",
+                    "✓ Energize with prescribed mantra before wearing",
+                    "✓ Wear on the prescribed day, time, finger, and metal",
+                    "✗ NEVER wear gemstones of exalted planets",
+                    "✗ NEVER wear gemstones of planets in own sign (unless specifically weak)",
+                    "✗ NEVER wear enemy planet gemstones simultaneously",
+                    "🚨 Blue Sapphire (Saturn): MANDATORY 3-day test period",
+                    "👨‍⚕️ ALWAYS consult a qualified Vedic astrologer for final confirmation",
+                    "⚠️ If ANY negative effects occur within 3 days, remove immediately"
+                ]
+            }
+        }
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({
+            'status': 'error',
+            'message': str(ve),
+            'type': 'validation_error'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'traceback': traceback.format_exc(),
+            'type': 'server_error'
+        }), 500
+
+
+
+
+#  Lal kitab remedies
+@bp.route('/lahiri/calculate-chart', methods=['POST'])
+def api_calculate_chart():
+    """API endpoint to calculate birth chart"""
+    try:
+        data = request.json
+        
+        birth_date = data.get('birth_date')  # Format: YYYY-MM-DD
+        birth_time = data.get('birth_time')  # Format: HH:MM
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        timezone_offset = float(data.get('timezone_offset', 5.5))
+        
+        if not all([birth_date, birth_time, latitude, longitude]):
+            return jsonify({'error': 'Missing required parameters'}), 400
+        
+        chart = lal_kitab_calculate_chart(birth_date, birth_time, latitude, longitude, timezone_offset)
+        return jsonify({'success': True, 'chart': chart})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/lahiri/lal-kitab-remedies', methods=['POST'])
+def api_lal_kitab_remedies():
+    """Get Lal Kitab remedies for specific planet-house combination"""
+    try:
+        data = request.json
+        planet = data.get('planet')
+        house = int(data.get('house'))
+        
+        result = lal_kitab_get_remedies_for_planet_house(planet, house)
+        return jsonify({'success': True, 'data': result})
+    
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/api/chart-with-remedies', methods=['POST'])
+def api_chart_with_remedies():
+    """Calculate chart and get all Lal Kitab remedies"""
+    try:
+        data = request.json
+        
+        birth_date = data.get('birth_date')
+        birth_time = data.get('birth_time')
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        timezone_offset = float(data.get('timezone_offset', 5.5))
+        
+        if not all([birth_date, birth_time, latitude, longitude]):
+            return jsonify({'error': 'Missing required parameters'}), 400
+        
+        # Calculate chart
+        chart = lal_kitab_calculate_chart(birth_date, birth_time, latitude, longitude, timezone_offset)
+        
+        # Get remedies for all planets
+        all_remedies = lal_kitab_get_all_chart_remedies(chart)
+        
+        return jsonify({
+            'success': True,
+            'chart': chart,
+            'lal_kitab_remedies': all_remedies
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
 

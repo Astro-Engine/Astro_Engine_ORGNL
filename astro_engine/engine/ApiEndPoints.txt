@@ -108,6 +108,18 @@ http://localhost:5000/lahiri/calculate_binnatakvarga
 http://localhost:5000/lahiri/calculate_sarvashtakavarga
 http://localhost:5000/lahiri/lahiri/shodasha_varga_summary
 
+******************   Yogas *******************************
+http://localhost:5000/lahiri/comprehensive_gaja_kesari
+http://localhost:5000/lahiri/comprehensive_guru_mangal
+http://localhost:5000/lahiri/guru-mangal-only
+http://localhost:5000/lahiri/budha-aditya-yoga
+http://localhost:5000/lahiri/chandra-mangal-yoga
+
+******************  Doshas ***************************
+http://localhost:5000/lahiri/calculate-angarak-dosha
+http://localhost:5000/lahiri/guru-chandal-analysis
+http://localhost:5000/lahiri/calculate-shrapit-dosha
+
 
 -------------------------------------------------------------------------------------------------
 **********************************       KP Sysytem Routes      ***********************************
