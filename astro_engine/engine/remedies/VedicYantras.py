@@ -1,14 +1,6 @@
-"""
-Vedic Astrology Yantra Calculations Module
-MODIFIED to match existing codebase function signatures
-"""
-
 import swisseph as swe
 from datetime import datetime, timedelta
 import math
-
-# Set Swiss Ephemeris path
-swe.set_ephe_path('astro_api/ephe')
 
 # Constants
 LAHIRI_AYANAMSA = swe.SIDM_LAHIRI
@@ -252,7 +244,7 @@ NAKSHATRAS = [
 ]
 
 
-def get_julian_day(date_str, time_str, timezone_offset):
+def yantra_get_julian_day(date_str, time_str, timezone_offset):
     """Calculate Julian Day for given date, time and timezone"""
     dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M:%S")
     dt_utc = dt - timedelta(hours=timezone_offset)
@@ -266,7 +258,7 @@ def get_julian_day(date_str, time_str, timezone_offset):
     return jd
 
 
-def normalize_angle(angle):
+def yantra_normalize_angle(angle):
     """Normalize angle to 0-360 range"""
     while angle < 0:
         angle += 360
@@ -275,26 +267,26 @@ def normalize_angle(angle):
     return angle
 
 
-def get_ayanamsa(jd):
+def yantra_get_ayanamsa(jd):
     """Get Lahiri Ayanamsa for given Julian Day"""
     swe.set_sid_mode(LAHIRI_AYANAMSA)
     return swe.get_ayanamsa_ut(jd)
 
 
-def calculate_planet_position(planet_id, jd, ayanamsa):
+def yantra_calculate_planet_position(planet_id, jd, ayanamsa):
     """Calculate sidereal position of a planet"""
     if planet_id == -1:  # Ketu
         rahu_pos = swe.calc_ut(jd, swe.MEAN_NODE)[0][0]
-        ketu_pos = normalize_angle(rahu_pos + 180)
+        ketu_pos = yantra_normalize_angle(rahu_pos + 180)
         return ketu_pos - ayanamsa
     
     result = swe.calc_ut(jd, planet_id)
     tropical_long = result[0][0]
-    sidereal_long = normalize_angle(tropical_long - ayanamsa)
+    sidereal_long = yantra_normalize_angle(tropical_long - ayanamsa)
     return sidereal_long
 
 
-def get_planet_speed(planet_id, jd):
+def yantra_get_planet_speed(planet_id, jd):
     """Get planet's daily motion speed"""
     if planet_id == -1:  # Ketu
         rahu_result = swe.calc_ut(jd, swe.MEAN_NODE)
@@ -304,22 +296,22 @@ def get_planet_speed(planet_id, jd):
     return result[0][3]
 
 
-def get_ascendant(jd, lat, lon, ayanamsa):
+def yantra_get_ascendant(jd, lat, lon, ayanamsa):
     """Calculate Ascendant (Lagna)"""
     houses = swe.houses(jd, lat, lon, b'P')
     tropical_asc = houses[0][0]
-    sidereal_asc = normalize_angle(tropical_asc - ayanamsa)
+    sidereal_asc = yantra_normalize_angle(tropical_asc - ayanamsa)
     return sidereal_asc
 
 
-def get_sign_and_degree(longitude):
+def yantra_get_sign_and_degree(longitude):
     """Convert longitude to sign and degree"""
     sign_num = int(longitude / 30)
     degree = longitude % 30
     return ZODIAC_SIGNS[sign_num], degree, sign_num
 
 
-def calculate_houses_whole_sign(ascendant_sign_num):
+def yantra_calculate_houses_whole_sign(ascendant_sign_num):
     """Calculate houses using Whole Sign system"""
     houses = {}
     for i in range(12):
@@ -328,13 +320,13 @@ def calculate_houses_whole_sign(ascendant_sign_num):
     return houses
 
 
-def get_planet_house(planet_sign_num, ascendant_sign_num):
+def yantra_get_planet_house(planet_sign_num, ascendant_sign_num):
     """Get house number for a planet using whole sign system"""
     house = ((planet_sign_num - ascendant_sign_num) % 12) + 1
     return house
 
 
-def get_nakshatra(longitude):
+def yantra_get_nakshatra(longitude):
     """Get nakshatra for given longitude"""
     for nakshatra in NAKSHATRAS:
         if nakshatra['start'] <= longitude < nakshatra['end']:
@@ -347,7 +339,7 @@ def get_nakshatra(longitude):
     return None
 
 
-def is_planet_retrograde(planet_id, jd):
+def yantra_is_planet_retrograde(planet_id, jd):
     """Check if planet is retrograde"""
     if planet_id in [swe.SUN, swe.MOON, swe.MEAN_NODE, -1]:
         return False
@@ -357,32 +349,28 @@ def is_planet_retrograde(planet_id, jd):
     return speed < 0
 
 
-def calculate_birth_chart(birth_data, lat, lon):
-    """
-    Calculate complete birth chart
-    MODIFIED SIGNATURE: Now accepts lat and lon as separate parameters
-    to match existing codebase expectations
-    """
-    jd = get_julian_day(birth_data['birth_date'], birth_data['birth_time'], 
+def yantra_calculate_birth_chart(birth_data):
+    """Calculate complete birth chart"""
+    jd = yantra_get_julian_day(birth_data['birth_date'], birth_data['birth_time'], 
                         birth_data['timezone_offset'])
-    ayanamsa = get_ayanamsa(jd)
+    ayanamsa = yantra_get_ayanamsa(jd)
     
-    # Calculate Ascendant using provided lat/lon parameters
-    ascendant_long = get_ascendant(jd, lat, lon, ayanamsa)
-    asc_sign, asc_degree, asc_sign_num = get_sign_and_degree(ascendant_long)
+    # Calculate Ascendant
+    ascendant_long = yantra_get_ascendant(jd, birth_data['latitude'], birth_data['longitude'], ayanamsa)
+    asc_sign, asc_degree, asc_sign_num = yantra_get_sign_and_degree(ascendant_long)
     
     # Calculate houses (whole sign)
-    houses = calculate_houses_whole_sign(asc_sign_num)
+    houses = yantra_calculate_houses_whole_sign(asc_sign_num)
     
     # Calculate planetary positions
     planets = {}
     for planet_name, planet_id in PLANETS.items():
-        planet_long = calculate_planet_position(planet_id, jd, ayanamsa)
-        sign, degree, sign_num = get_sign_and_degree(planet_long)
-        house = get_planet_house(sign_num, asc_sign_num)
-        nakshatra = get_nakshatra(planet_long)
-        is_retro = is_planet_retrograde(planet_id, jd)
-        speed = get_planet_speed(planet_id, jd)
+        planet_long = yantra_calculate_planet_position(planet_id, jd, ayanamsa)
+        sign, degree, sign_num = yantra_get_sign_and_degree(planet_long)
+        house = yantra_get_planet_house(sign_num, asc_sign_num)
+        nakshatra = yantra_get_nakshatra(planet_long)
+        is_retro = yantra_is_planet_retrograde(planet_id, jd)
+        speed = yantra_get_planet_speed(planet_id, jd)
         
         planets[planet_name] = {
             'longitude': round(planet_long, 6),
@@ -409,7 +397,7 @@ def calculate_birth_chart(birth_data, lat, lon):
     }
 
 
-def calculate_uchcha_bala(planet, planet_data):
+def yantra_calculate_uchcha_bala(planet, planet_data):
     """
     Calculate Uchcha Bala (Exaltation strength)
     Maximum: 60 Rupas when at exact exaltation point
@@ -438,7 +426,7 @@ def calculate_uchcha_bala(planet, planet_data):
     return max(0.0, uchcha_bala)
 
 
-def calculate_saptavargaja_bala(planet, planet_data):
+def yantra_calculate_saptavargaja_bala(planet, planet_data):
     """Calculate Saptavargaja Bala (Strength from 7 divisional charts)"""
     sign = planet_data['sign']
     bala = 0.0
@@ -457,7 +445,7 @@ def calculate_saptavargaja_bala(planet, planet_data):
     return bala
 
 
-def calculate_ojhayugma_bala(planet, planet_data):
+def yantra_calculate_ojhayugma_bala(planet, planet_data):
     """Calculate Ojhayugmarasyamsa Bala (Odd-Even sign strength)"""
     sign_num = planet_data['sign_num']
     is_odd_sign = (sign_num % 2 == 0)
@@ -470,7 +458,7 @@ def calculate_ojhayugma_bala(planet, planet_data):
         return 7.5
 
 
-def calculate_kendra_bala(planet_data):
+def yantra_calculate_kendra_bala(planet_data):
     """Calculate Kendra Bala (Angular house strength)"""
     house = planet_data['house']
     
@@ -482,7 +470,7 @@ def calculate_kendra_bala(planet_data):
         return 15.0
 
 
-def calculate_drekkana_bala(planet, planet_data):
+def yantra_calculate_drekkana_bala(planet, planet_data):
     """Calculate Drekkana Bala (Decanate strength)"""
     degree = planet_data['degree']
     
@@ -494,13 +482,13 @@ def calculate_drekkana_bala(planet, planet_data):
         return 15.0 if planet in ['Moon', 'Venus'] else 5.0
 
 
-def calculate_sthana_bala(planet, planet_data):
+def yantra_calculate_sthana_bala(planet, planet_data):
     """Calculate complete Sthana Bala (Positional Strength)"""
-    uchcha_bala = calculate_uchcha_bala(planet, planet_data)
-    saptavargaja_bala = calculate_saptavargaja_bala(planet, planet_data)
-    ojhayugma_bala = calculate_ojhayugma_bala(planet, planet_data)
-    kendra_bala = calculate_kendra_bala(planet_data)
-    drekkana_bala = calculate_drekkana_bala(planet, planet_data)
+    uchcha_bala = yantra_calculate_uchcha_bala(planet, planet_data)
+    saptavargaja_bala = yantra_calculate_saptavargaja_bala(planet, planet_data)
+    ojhayugma_bala = yantra_calculate_ojhayugma_bala(planet, planet_data)
+    kendra_bala = yantra_calculate_kendra_bala(planet_data)
+    drekkana_bala = yantra_calculate_drekkana_bala(planet, planet_data)
     
     total = uchcha_bala + saptavargaja_bala + ojhayugma_bala + kendra_bala + drekkana_bala
     
@@ -514,7 +502,7 @@ def calculate_sthana_bala(planet, planet_data):
     }
 
 
-def calculate_dig_bala(planet, house):
+def yantra_calculate_dig_bala(planet, house):
     """Calculate Dig Bala (Directional strength)"""
     best_directions = {
         'Sun': 10,
@@ -536,7 +524,7 @@ def calculate_dig_bala(planet, house):
     return max(0.0, dig_bala)
 
 
-def calculate_nathonnatha_bala(planet, chart):
+def yantra_calculate_nathonnatha_bala(planet, chart):
     """Calculate Nathonnatha Bala (Day/Night strength)"""
     sun_house = chart['planets']['Sun']['house']
     is_day = sun_house in [7, 8, 9, 10, 11, 12]
@@ -549,18 +537,18 @@ def calculate_nathonnatha_bala(planet, chart):
         return 30.0
 
 
-def calculate_paksha_bala(chart):
+def yantra_calculate_paksha_bala(chart):
     """Calculate Paksha Bala (Lunar fortnight strength)"""
     sun_long = chart['planets']['Sun']['longitude']
     moon_long = chart['planets']['Moon']['longitude']
     
-    diff = normalize_angle(moon_long - sun_long)
+    diff = yantra_normalize_angle(moon_long - sun_long)
     is_waxing = diff < 180
     
     return is_waxing, diff
 
 
-def calculate_tribhaga_bala(planet, chart):
+def yantra_calculate_tribhaga_bala(planet, chart):
     """Calculate Tribhaga Bala (1/3rd of day/night strength)"""
     sun_house = chart['planets']['Sun']['house']
     is_day = sun_house in [7, 8, 9, 10, 11, 12]
@@ -573,12 +561,12 @@ def calculate_tribhaga_bala(planet, chart):
         return 30.0
 
 
-def calculate_abda_masa_dina_hora_bala(planet):
+def yantra_calculate_abda_masa_dina_hora_bala(planet):
     """Calculate Varsha-Masa-Dina-Hora Bala (Time lord strengths)"""
     return 30.0
 
 
-def calculate_ayana_bala(planet, planet_data):
+def yantra_calculate_ayana_bala(planet, planet_data):
     """Calculate Ayana Bala (Declination strength)"""
     sign_num = planet_data['sign_num']
     
@@ -588,18 +576,18 @@ def calculate_ayana_bala(planet, planet_data):
         return 30.0 if planet in ['Moon', 'Venus', 'Saturn'] else 15.0
 
 
-def calculate_kala_bala(planet, planet_data, chart):
+def yantra_calculate_kala_bala(planet, planet_data, chart):
     """Calculate complete Kala Bala (Temporal Strength)"""
-    nathonnatha_bala = calculate_nathonnatha_bala(planet, chart)
+    nathonnatha_bala = yantra_calculate_nathonnatha_bala(planet, chart)
     
     paksha_bala = 0.0
     if planet == 'Moon':
-        is_waxing, diff = calculate_paksha_bala(chart)
+        is_waxing, diff = yantra_calculate_paksha_bala(chart)
         paksha_bala = (diff / 180.0) * 60.0 if is_waxing else (1.0 - (diff - 180.0) / 180.0) * 60.0
     
-    tribhaga_bala = calculate_tribhaga_bala(planet, chart)
-    abda_bala = calculate_abda_masa_dina_hora_bala(planet)
-    ayana_bala = calculate_ayana_bala(planet, planet_data)
+    tribhaga_bala = yantra_calculate_tribhaga_bala(planet, chart)
+    abda_bala = yantra_calculate_abda_masa_dina_hora_bala(planet)
+    ayana_bala = yantra_calculate_ayana_bala(planet, planet_data)
     
     total = nathonnatha_bala + paksha_bala + tribhaga_bala + abda_bala + ayana_bala
     
@@ -613,7 +601,7 @@ def calculate_kala_bala(planet, planet_data, chart):
     }
 
 
-def calculate_cheshta_bala(planet, planet_data, chart):
+def yantra_calculate_cheshta_bala(planet, planet_data, chart):
     """Calculate Cheshta Bala (Motional strength)"""
     if planet in ['Sun', 'Moon']:
         return {'total': 0.0, 'is_retrograde': False, 'is_combust': False}
@@ -645,7 +633,7 @@ def calculate_cheshta_bala(planet, planet_data, chart):
     }
 
 
-def calculate_drik_bala(planet, chart):
+def yantra_calculate_drik_bala(planet, chart):
     """Calculate Drik Bala (Aspectual strength)"""
     drik_bala = 0.0
     planet_house = chart['planets'][planet]['house']
@@ -696,7 +684,7 @@ def calculate_drik_bala(planet, chart):
     return drik_bala
 
 
-def calculate_shadbala(chart):
+def yantra_calculate_shadbala(chart):
     """Calculate complete Shadbala (Six-fold Strength) for all planets"""
     shadbala_scores = {}
     
@@ -706,20 +694,20 @@ def calculate_shadbala(chart):
         
         planet_data = chart['planets'][planet]
         
-        sthana_bala_data = calculate_sthana_bala(planet, planet_data)
+        sthana_bala_data = yantra_calculate_sthana_bala(planet, planet_data)
         sthana_bala = sthana_bala_data['total']
         
-        dig_bala = calculate_dig_bala(planet, planet_data['house'])
+        dig_bala = yantra_calculate_dig_bala(planet, planet_data['house'])
         
-        kala_bala_data = calculate_kala_bala(planet, planet_data, chart)
+        kala_bala_data = yantra_calculate_kala_bala(planet, planet_data, chart)
         kala_bala = kala_bala_data['total']
         
-        cheshta_bala_data = calculate_cheshta_bala(planet, planet_data, chart)
+        cheshta_bala_data = yantra_calculate_cheshta_bala(planet, planet_data, chart)
         cheshta_bala = cheshta_bala_data['total']
         
         naisargika_bala = NAISARGIKA_BALA.get(planet, 20.0)
         
-        drik_bala = calculate_drik_bala(planet, chart)
+        drik_bala = yantra_calculate_drik_bala(planet, chart)
         
         total_shadbala = (sthana_bala + dig_bala + kala_bala + 
                          cheshta_bala + naisargika_bala + drik_bala)
@@ -772,7 +760,7 @@ def calculate_shadbala(chart):
     return shadbala_scores
 
 
-def check_debilitation(planet, planet_data):
+def yantra_check_debilitation(planet, planet_data):
     """Check if planet is debilitated"""
     debil_info = DEBILITATION.get(planet)
     if not debil_info:
@@ -780,7 +768,7 @@ def check_debilitation(planet, planet_data):
     return planet_data['sign'] == debil_info['sign']
 
 
-def check_exaltation(planet, planet_data):
+def yantra_check_exaltation(planet, planet_data):
     """Check if planet is exalted"""
     exalt_info = EXALTATION.get(planet)
     if not exalt_info:
@@ -788,7 +776,7 @@ def check_exaltation(planet, planet_data):
     return planet_data['sign'] == exalt_info['sign']
 
 
-def check_mangal_dosha(chart):
+def yantra_check_mangal_dosha(chart):
     """Check for Mangal Dosha"""
     mars = chart['planets']['Mars']
     mars_house = mars['house']
@@ -797,7 +785,7 @@ def check_mangal_dosha(chart):
     has_dosha = mars_house in dosha_houses
     
     cancellations = []
-    if check_exaltation('Mars', mars):
+    if yantra_check_exaltation('Mars', mars):
         cancellations.append('Mars is exalted')
     if mars['sign'] in ['Aries', 'Scorpio']:
         cancellations.append('Mars in own sign')
@@ -809,7 +797,7 @@ def check_mangal_dosha(chart):
     }
 
 
-def check_kaal_sarp_dosha(chart):
+def yantra_check_kaal_sarp_dosha(chart):
     """Check for Kaal Sarp Dosha"""
     rahu_house = chart['planets']['Rahu']['house']
     ketu_house = chart['planets']['Ketu']['house']
@@ -837,7 +825,7 @@ def check_kaal_sarp_dosha(chart):
     }
 
 
-def check_pitra_dosha(chart):
+def yantra_check_pitra_dosha(chart):
     """Check for Pitra Dosha"""
     sun = chart['planets']['Sun']
     rahu = chart['planets']['Rahu']
@@ -862,7 +850,7 @@ def check_pitra_dosha(chart):
     }
 
 
-def check_grahan_dosha(chart):
+def yantra_check_grahan_dosha(chart):
     """Check for Grahan Dosha"""
     sun = chart['planets']['Sun']
     moon = chart['planets']['Moon']
@@ -886,10 +874,10 @@ def check_grahan_dosha(chart):
     }
 
 
-def calculate_vimshottari_dasha(chart, birth_date):
+def yantra_calculate_vimshottari_dasha(chart, birth_date):
     """Calculate Vimshottari Dasha"""
     moon_longitude = chart['planets']['Moon']['longitude']
-    moon_nakshatra = get_nakshatra(moon_longitude)
+    moon_nakshatra = yantra_get_nakshatra(moon_longitude)
     
     if not moon_nakshatra:
         return None
@@ -957,7 +945,7 @@ def calculate_vimshottari_dasha(chart, birth_date):
     }
 
 
-def get_house_lords(ascendant_sign_num):
+def yantra_get_house_lords(ascendant_sign_num):
     """Get lords of all 12 houses"""
     house_lords = {}
     
@@ -974,7 +962,7 @@ def get_house_lords(ascendant_sign_num):
     return house_lords
 
 
-def recommend_yantras(chart, shadbala, doshas, dasha, birth_date):
+def yantra_recommend_yantras(chart, shadbala, doshas, dasha, birth_date):
     """
     Recommend yantras based on comprehensive analysis
     
@@ -1012,7 +1000,7 @@ def recommend_yantras(chart, shadbala, doshas, dasha, birth_date):
             continue
         
         # Get house lordships
-        house_lords = get_house_lords(chart['ascendant']['sign_num'])
+        house_lords = yantra_get_house_lords(chart['ascendant']['sign_num'])
         important_houses = [1, 4, 5, 7, 9, 10]  # Kendra + Trikona
         rules_important_house = False
         
@@ -1024,8 +1012,8 @@ def recommend_yantras(chart, shadbala, doshas, dasha, birth_date):
         # Get weakness status
         is_weak = shadbala[planet]['is_weak']
         percentage = shadbala[planet]['percentage_of_required']
-        is_debilitated = check_debilitation(planet, planet_data)
-        is_exalted = check_exaltation(planet, planet_data)
+        is_debilitated = yantra_check_debilitation(planet, planet_data)
+        is_exalted = yantra_check_exaltation(planet, planet_data)
         
         # =================================================================
         # RULE 1: YOGAKARAKA PLANETS (HIGHEST PRIORITY)
@@ -1165,7 +1153,7 @@ def recommend_yantras(chart, shadbala, doshas, dasha, birth_date):
     return recommendations
 
 
-def get_yantra_details(planet):
+def yantra_get_yantra_details(planet):
     """Get detailed yantra information"""
     yantra_info = {
         'Sun': {

@@ -114,11 +114,32 @@ http://localhost:5000/lahiri/comprehensive_guru_mangal
 http://localhost:5000/lahiri/guru-mangal-only
 http://localhost:5000/lahiri/budha-aditya-yoga
 http://localhost:5000/lahiri/chandra-mangal-yoga
+http://localhost:5000/lahiri/raj-yoga
+http://localhost:5000/lahiri/pancha-mahapurusha-yogas
+http://localhost:5000/lahiri/daridra-analysis
+http://localhost:5000/lahiri/dhan-yoga-analysis
+http://localhost:5000/lahiri/malefic_yogas
+http://localhost:5000/lahiri/yoga-analysis
+http://localhost:5000/lahiri/special-yogas
+http://localhost:5000/lahiri/spiritual_prosperity_yogas
+http://localhost:5000/lahiri/shubh-yogas
+http://localhost:5000/lahiri/kalpadruma-yoga
+http://localhost:5000/lahiri/kala-sarpa-fixed
 
 ******************  Doshas ***************************
 http://localhost:5000/lahiri/calculate-angarak-dosha
 http://localhost:5000/lahiri/guru-chandal-analysis
 http://localhost:5000/lahiri/calculate-shrapit-dosha
+http://localhost:5000/lahiri/calculate-sade-sati
+http://localhost:5000/lahiri/pitra-dosha
+
+**************** Remedies **************************
+http://localhost:5000/lahiri/yantra-recommendations
+http://localhost:5000/lahiri/mantra-analysis
+http://localhost:5000/lahiri/vedic_remedies
+http://localhost:5000/lahiri/calculate-gemstone
+http://localhost:5000/lahiri/lal-kitab-remedies
+
 
 
 -------------------------------------------------------------------------------------------------
