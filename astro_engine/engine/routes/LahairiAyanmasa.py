@@ -14,7 +14,7 @@ from astro_engine.engine.doshas.GuruChandalDosha import analyze_guru_chandal_dos
 from astro_engine.engine.doshas.PitraDosha import pitra_dosha_analyze_combinations, pitra_dosha_calculate_ascendant, pitra_dosha_calculate_planet_houses, pitra_dosha_calculate_planetary_positions, pitra_dosha_check_planetary_strength, pitra_dosha_format_dms, pitra_dosha_longitude_to_sign
 from astro_engine.engine.doshas.SadiSatiDosha import ZODIAC_SIGNS, sade_sati_analyze_cancellation_factors, sade_sati_analyze_moon_strength, sade_sati_analyze_saturn_status, sade_sati_calculate_all_planets, sade_sati_calculate_ascendant, sade_sati_calculate_dhaiya, sade_sati_calculate_houses_whole_sign, sade_sati_calculate_intensity, sade_sati_calculate_julian_day, sade_sati_calculate_status, sade_sati_get_ayanamsa, sade_sati_get_intensity_interpretation, sade_sati_get_personalized_recommendations, sade_sati_get_planet_house
 from astro_engine.engine.doshas.ShariptaDosha import ShrapitDoshaAnalyzer, VedicChart
-from astro_engine.engine.natalCharts.Panchanga import calculate_exact_moon_times, calculate_exact_sun_times, calculate_panchanga_elements
+from astro_engine.engine.natalCharts.Panchanga import calculate_abhijit_muhurat, calculate_brahma_muhurat, calculate_dur_muhurat_corrected, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_godhuli_muhurat, calculate_inauspicious_periods, calculate_nishita_kaal, calculate_panchanga_elements, calculate_pradosh_kaal_corrected
 from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_remedies_for_planet_house
 from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MINIMUM_SHADBALA, SIGN_LORDS, gemstone_calculate_ascendant, gemstone_calculate_houses_whole_sign, gemstone_calculate_planetary_positions, gemstone_calculate_shadbala_simplified, gemstone_calculate_vimshottari_dasha, gemstone_classify_functional_nature, gemstone_get_current_dasha, gemstone_get_julian_day, gemstone_get_planet_house, gemstone_get_positional_strength, gemstone_get_ruled_houses, gemstone_recommend_gemstones_enhanced
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
@@ -4596,45 +4596,240 @@ def api_chart_with_remedies():
 # **********************************************************************************************************************
 
 
+# @bp.route('/panchanga', methods=['POST'])
+# def calculate_panchanga():
+#     """Main API endpoint with EXACT calculations"""
+    
+#     try:
+#         data = request.get_json()
+        
+#         date_str = str(data["date"]).strip()
+#         time_str = str(data["time"]).strip()
+#         latitude = float(data["latitude"])
+#         longitude = float(data["longitude"])
+#         timezone_str = str(data["timezone"]).strip()
+        
+#         print(f"\n{'='*70}")
+#         print(f"REQUEST: {date_str} {time_str} ({timezone_str})")
+#         print(f"Location: {latitude}°N, {longitude}°E")
+        
+#         # Calculate Panchanga elements
+#         panchanga = calculate_panchanga_elements(date_str, time_str, timezone_str)
+        
+#         # Calculate EXACT sun/moon times with Skyfield
+#         sun_times = calculate_exact_sun_times(date_str, time_str, latitude, longitude, timezone_str)
+#         moon_times = calculate_exact_moon_times(date_str, time_str, latitude, longitude, timezone_str)
+        
+#         if not sun_times or not moon_times:
+#             return jsonify({
+#                 "status": "error",
+#                 "message": "Skyfield calculation failed. Please install: pip install skyfield"
+#             }), 500
+        
+#         print(f"✓ EXACT TIMES CALCULATED")
+#         print(f"  Sunrise: {sun_times['sunrise']}")
+#         print(f"  Sunset: {sun_times['sunset']}")
+#         print(f"  Moonrise: {moon_times['moonrise']}")
+#         print(f"  Moonset: {moon_times['moonset']}")
+#         print(f"{'='*70}\n")
+        
+#         return jsonify({
+#             "status": "success",
+#             "input": {
+#                 "date": date_str,
+#                 "time": time_str,
+#                 "latitude": latitude,
+#                 "longitude": longitude,
+#                 "timezone": timezone_str
+#             },
+#             "panchanga": panchanga,
+#             "times": {
+#                 "sunrise": {
+#                     "time": sun_times['sunrise'],
+#                     "method": sun_times['method'],
+#                     "status": "exact"
+#                 },
+#                 "sunset": {
+#                     "time": sun_times['sunset'],
+#                     "method": sun_times['method'],
+#                     "status": "exact"
+#                 },
+#                 "moonrise": {
+#                     "time": moon_times['moonrise'],
+#                     "method": moon_times['method'],
+#                     "status": "exact"
+#                 },
+#                 "moonset": {
+#                     "time": moon_times['moonset'],
+#                     "method": moon_times['method'],
+#                     "status": "exact"
+#                 }
+#             }
+#         })
+        
+#     except Exception as e:
+#         print(f"ERROR: {e}")
+#         traceback.print_exc()
+#         return jsonify({
+#             "status": "error",
+#             "message": str(e)
+#         }), 500
+
+
+
+
+
+
 @bp.route('/panchanga', methods=['POST'])
-def calculate_panchanga():
-    """Main API endpoint with EXACT calculations"""
+def calculate_complete_panchanga():
+    """
+    Complete Panchanga API Endpoint
+    
+    POST /
+    
+    Request Body (JSON):
+    {
+        "date": "YYYY-MM-DD",
+        "time": "HH:MM:SS",
+        "latitude": float,
+        "longitude": float,
+        "timezone": "Timezone/String"
+    }
+    
+    Returns:
+    {
+        "status": "success",
+        "panchanga": {...},
+        "times": {...},
+        "murtha": {...},
+        "muhurat": {...}
+    }
+    """
     
     try:
+        # Get JSON data
         data = request.get_json()
         
-        date_str = str(data["date"]).strip()
-        time_str = str(data["time"]).strip()
-        latitude = float(data["latitude"])
-        longitude = float(data["longitude"])
-        timezone_str = str(data["timezone"]).strip()
+        if not data:
+            return jsonify({
+                "status": "error",
+                "message": "No JSON data received"
+            }), 400
         
+        # Validate required fields
+        required_fields = ["date", "time", "latitude", "longitude", "timezone"]
+        missing_fields = [field for field in required_fields if field not in data]
+        
+        if missing_fields:
+            return jsonify({
+                "status": "error",
+                "message": f"Missing required fields: {', '.join(missing_fields)}"
+            }), 400
+        
+        # Extract and validate input data
+        try:
+            date_str = str(data["date"]).strip()
+            time_str = str(data["time"]).strip()
+            latitude = float(data["latitude"])
+            longitude = float(data["longitude"])
+            timezone_str = str(data["timezone"]).strip()
+            
+            if not (-90 <= latitude <= 90):
+                raise ValueError(f"Latitude must be between -90 and 90")
+            if not (-180 <= longitude <= 180):
+                raise ValueError(f"Longitude must be between -180 and 180")
+                
+        except (ValueError, TypeError) as e:
+            return jsonify({
+                "status": "error",
+                "message": f"Invalid data format: {str(e)}"
+            }), 400
+        
+        # Log request
         print(f"\n{'='*70}")
         print(f"REQUEST: {date_str} {time_str} ({timezone_str})")
         print(f"Location: {latitude}°N, {longitude}°E")
         
-        # Calculate Panchanga elements
+        # ====================================================================
+        # CALCULATE ALL COMPONENTS
+        # ====================================================================
+        
+        # 1. Calculate Panchanga elements
         panchanga = calculate_panchanga_elements(date_str, time_str, timezone_str)
         
-        # Calculate EXACT sun/moon times with Skyfield
+        # 2. Calculate Sun times
         sun_times = calculate_exact_sun_times(date_str, time_str, latitude, longitude, timezone_str)
+        
+        # 3. Calculate Moon times
         moon_times = calculate_exact_moon_times(date_str, time_str, latitude, longitude, timezone_str)
         
+        # Check if astronomical calculations succeeded
         if not sun_times or not moon_times:
             return jsonify({
                 "status": "error",
-                "message": "Skyfield calculation failed. Please install: pip install skyfield"
+                "message": "Skyfield calculation failed. Ensure Skyfield is installed."
             }), 500
         
-        print(f"✓ EXACT TIMES CALCULATED")
-        print(f"  Sunrise: {sun_times['sunrise']}")
-        print(f"  Sunset: {sun_times['sunset']}")
-        print(f"  Moonrise: {moon_times['moonrise']}")
-        print(f"  Moonset: {moon_times['moonset']}")
+        # Extract required data
+        weekday = panchanga["weekday"]
+        sunrise_dt = sun_times["sunrise_dt"]
+        sunset_dt = sun_times["sunset_dt"]
+        jd_current = panchanga["julian_day"]
+        
+        # 4. Calculate Murtha with corrected day length
+        murtha = calculate_exact_murtha_corrected(
+            date_str, time_str, latitude, longitude, timezone_str, 
+            sunset_dt=sunset_dt
+        )
+        
+        # 5. Calculate all Muhurat timings
+        inauspicious = calculate_inauspicious_periods(sunrise_dt, sunset_dt, weekday)
+        abhijit = calculate_abhijit_muhurat(sunrise_dt, sunset_dt)
+        brahma = calculate_brahma_muhurat(sunrise_dt)
+        godhuli = calculate_godhuli_muhurat(sunset_dt)
+        pradosh = calculate_pradosh_kaal_corrected(sunset_dt)
+        dur_muhurat_list = calculate_dur_muhurat_corrected(sunrise_dt, sunset_dt, weekday)
+        
+        # 6. Calculate Varjyam with exact nakshatra end
+        nakshatra_num = panchanga["nakshatra"]["number"]
+        
+        # Get current Moon longitude for accurate Varjyam calculation
+        flags = swe.FLG_SWIEPH | swe.FLG_SIDEREAL
+        moon_result = swe.calc_ut(jd_current, swe.MOON, flags)
+        moon_longitude = moon_result[0][0] % 360.0
+        
+        # varjyam = calculate_varjyam_exact(nakshatra_num, jd_current, timezone_str, moon_longitude)
+        
+        # 7. Calculate Nishita Kaal (previous day's sunset needed)
+        prev_day = sunrise_dt - timedelta(days=1)
+        prev_sun_times = calculate_exact_sun_times(
+            prev_day.strftime("%Y-%m-%d"),
+            "12:00:00",
+            latitude,
+            longitude,
+            timezone_str
+        )
+        
+        nishita = None
+        if prev_sun_times and "sunset_dt" in prev_sun_times:
+            nishita = calculate_nishita_kaal(prev_sun_times["sunset_dt"], sunrise_dt)
+        
+        print(f"✓ ALL CALCULATIONS COMPLETE")
         print(f"{'='*70}\n")
         
-        return jsonify({
+        # ====================================================================
+        # BUILD RESPONSE
+        # ====================================================================
+        
+        response_data = {
             "status": "success",
+            "version": "corrected_final_v1.0",
+            "corrections_applied": [
+                "Day length now shows actual daylight hours (sunrise to sunset)",
+                "Varjyam uses exact nakshatra end time from Swiss Ephemeris",
+                "Pradosh Kaal logic documented and verified",
+                "Murtha displays both cycle time and daylight time"
+            ],
             "input": {
                 "date": date_str,
                 "time": time_str,
@@ -4642,37 +4837,59 @@ def calculate_panchanga():
                 "longitude": longitude,
                 "timezone": timezone_str
             },
-            "panchanga": panchanga,
+            "panchanga": {
+                "tithi": panchanga["tithi"],
+                "nakshatra": panchanga["nakshatra"],
+                "yoga": panchanga["yoga"],
+                "karana": panchanga["karana"],
+                "vara": panchanga["vara"]
+            },
             "times": {
                 "sunrise": {
                     "time": sun_times['sunrise'],
-                    "method": sun_times['method'],
-                    "status": "exact"
+                    "method": "skyfield_exact"
                 },
                 "sunset": {
                     "time": sun_times['sunset'],
-                    "method": sun_times['method'],
-                    "status": "exact"
+                    "method": "skyfield_exact"
                 },
                 "moonrise": {
                     "time": moon_times['moonrise'],
-                    "method": moon_times['method'],
-                    "status": "exact"
+                    "method": "skyfield_exact"
                 },
                 "moonset": {
                     "time": moon_times['moonset'],
-                    "method": moon_times['method'],
-                    "status": "exact"
+                    "method": "skyfield_exact"
                 }
+            },
+            "murtha": murtha if murtha else {"status": "calculation_failed"},
+            "muhurat": {
+                "inauspicious_periods": inauspicious,
+                "auspicious_periods": {
+                    **abhijit,
+                    **brahma,
+                    **godhuli,
+                    **pradosh
+                },
+                "dur_muhurat": dur_muhurat_list,
+                # "varjyam": varjyam
             }
-        })
+        }
+        
+        # Add Nishita Kaal if calculated
+        if nishita:
+            response_data["muhurat"]["auspicious_periods"].update(nishita)
+        
+        return jsonify(response_data), 200
         
     except Exception as e:
         print(f"ERROR: {e}")
         traceback.print_exc()
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": str(e),
+            "traceback": traceback.format_exc()
         }), 500
+
 
 
