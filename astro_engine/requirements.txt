@@ -6,6 +6,7 @@ Flask-Compress>=1.20
 
 # Astrology Calculations
 pyswisseph>=2.10.0
+skyfield>=1.53
 
 # Web Servers
 waitress>=3.0.0
