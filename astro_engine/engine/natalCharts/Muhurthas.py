@@ -1,3 +1,24 @@
+"""
+MUHURAT CALCULATION MODULE - VERSION 11.0
+==========================================
+All Vedic Muhurat timing calculations with CORRECTED Sunday & Friday Dur Muhurat
+
+Features:
+- Rahu Kaal (highly inauspicious period)
+- Yamaganda Kaal (inauspicious period)
+- Gulika Kaal (inauspicious period)
+- Abhijit Muhurat (8th of 15 daytime muhurats - inauspicious on Wednesday)
+- Dur Muhurat (corrected positions for Sunday [10, 14] and Friday [4, 9])
+- Pradosh Kaal (sacred twilight period)
+- Gand Mool (nakshatra-based inauspicious period)
+
+Version: 11.0 - CORRECTED SUNDAY & FRIDAY DUR MUHURAT
+Corrections:
+  - Sunday: [10, 14] (was [11, 5])
+  - Friday: [4, 9] (was [8, 15])
+  - Wednesday: Dur Muhurat = position 8 (same as Abhijit)
+"""
+
 from datetime import datetime, timedelta
 import swisseph as swe
 import pytz
@@ -116,6 +137,10 @@ class MuhuratCalculator:
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     
     def calculate_rahu_kaal(self, sunrise_jd, sunset_jd):
+        """
+        Calculate Rahu Kaal - inauspicious period ruled by Rahu
+        Formula: Day divided into 8 segments, Rahu occupies specific segment based on weekday
+        """
         day_duration_hours = (sunset_jd - sunrise_jd) * 24
         segment_hours = day_duration_hours / 8
         
@@ -123,13 +148,13 @@ class MuhuratCalculator:
         weekday = sunrise_dt.weekday()
         
         rahu_positions = {
-            0: 1,  # Monday
-            1: 6,  # Tuesday
-            2: 4,  # Wednesday
-            3: 5,  # Thursday
-            4: 3,  # Friday
-            5: 2,  # Saturday
-            6: 7   # Sunday
+            0: 1,  # Monday - Segment 2
+            1: 6,  # Tuesday - Segment 7
+            2: 4,  # Wednesday - Segment 5
+            3: 5,  # Thursday - Segment 6
+            4: 3,  # Friday - Segment 4
+            5: 2,  # Saturday - Segment 3
+            6: 7   # Sunday - Segment 8
         }
         
         position = rahu_positions[weekday]
@@ -147,10 +172,17 @@ class MuhuratCalculator:
             "end_datetime": self.format_datetime(end_dt),
             "duration_minutes": round(segment_hours * 60, 2),
             "quality": "Highly Inauspicious",
+            "weekday": sunrise_dt.strftime("%A"),
+            "position": position,
+            "segment": position + 1,
             "description": "Period ruled by Rahu - avoid starting new ventures"
         }
     
     def calculate_yamaganda_kaal(self, sunrise_jd, sunset_jd):
+        """
+        Calculate Yamaganda Kaal - inauspicious period ruled by Yama
+        Formula: Day divided into 8 segments, Yamaganda occupies specific segment based on weekday
+        """
         day_duration_hours = (sunset_jd - sunrise_jd) * 24
         segment_hours = day_duration_hours / 8
         
@@ -158,13 +190,13 @@ class MuhuratCalculator:
         weekday = sunrise_dt.weekday()
         
         yamaganda_positions = {
-            0: 3,  # Monday
-            1: 2,  # Tuesday
-            2: 1,  # Wednesday
-            3: 0,  # Thursday
-            4: 6,  # Friday
-            5: 5,  # Saturday
-            6: 4   # Sunday
+            0: 3,  # Monday - Segment 4
+            1: 2,  # Tuesday - Segment 3
+            2: 1,  # Wednesday - Segment 2
+            3: 0,  # Thursday - Segment 1
+            4: 6,  # Friday - Segment 7
+            5: 5,  # Saturday - Segment 6
+            6: 4   # Sunday - Segment 5
         }
         
         position = yamaganda_positions[weekday]
@@ -182,10 +214,17 @@ class MuhuratCalculator:
             "end_datetime": self.format_datetime(end_dt),
             "duration_minutes": round(segment_hours * 60, 2),
             "quality": "Inauspicious",
+            "weekday": sunrise_dt.strftime("%A"),
+            "position": position,
+            "segment": position + 1,
             "description": "Period ruled by Yama - avoid important activities"
         }
     
     def calculate_gulika_kaal(self, sunrise_jd, sunset_jd):
+        """
+        Calculate Gulika Kaal - inauspicious period ruled by Gulika (son of Saturn)
+        Formula: Day divided into 8 segments, Gulika occupies specific segment based on weekday
+        """
         day_duration_hours = (sunset_jd - sunrise_jd) * 24
         segment_hours = day_duration_hours / 8
         
@@ -193,13 +232,13 @@ class MuhuratCalculator:
         weekday = sunrise_dt.weekday()
         
         gulika_positions = {
-            0: 1,  # Monday
-            1: 4,  # Tuesday
-            2: 5,  # Wednesday
-            3: 2,  # Thursday
-            4: 3,  # Friday
-            5: 0,  # Saturday
-            6: 6   # Sunday
+            0: 5,  # Monday - Segment 6
+            1: 4,  # Tuesday - Segment 5
+            2: 3,  # Wednesday - Segment 4
+            3: 2,  # Thursday - Segment 3
+            4: 1,  # Friday - Segment 2
+            5: 0,  # Saturday - Segment 1
+            6: 6   # Sunday - Segment 7
         }
         
         position = gulika_positions[weekday]
@@ -217,79 +256,179 @@ class MuhuratCalculator:
             "end_datetime": self.format_datetime(end_dt),
             "duration_minutes": round(segment_hours * 60, 2),
             "quality": "Inauspicious",
+            "weekday": sunrise_dt.strftime("%A"),
+            "position": position,
+            "segment": position + 1,
             "description": "Period ruled by Gulika - avoid important activities"
         }
     
     def calculate_abhijit_muhurat(self, sunrise_jd, sunset_jd):
-        apparent_noon_jd = (sunrise_jd + sunset_jd) / 2
-        half_duration_days = (22.5 / 60) / 24
+        """
+        Calculate Abhijit Muhurat - 8th of 15 daytime muhurats
         
-        start_jd = apparent_noon_jd - half_duration_days
-        end_jd = apparent_noon_jd + half_duration_days
+        EXACT LOGIC:
+        ============
+        1. Day from sunrise to sunset is divided into 15 equal muhurats
+        2. Each muhurat = (sunset - sunrise) / 15
+        3. Abhijit is the 8th muhurat (position 8 out of 15)
+        4. Calculation: Start = sunrise + (7 * muhurat_duration)
+                       End = Start + muhurat_duration
+        
+        WEDNESDAY RULE:
+        ===============
+        - On Wednesday, Abhijit is considered INAUSPICIOUS
+        - It should still be shown in the response but marked as "Inauspicious"
+        - This is the classical Vedic rule from Muhurta Chintamani
+        
+        OTHER DAYS:
+        ===========
+        - Abhijit is the MOST AUSPICIOUS muhurat
+        - Can override other inauspicious periods
+        """
+        # Calculate day duration and muhurat length
+        day_duration_hours = (sunset_jd - sunrise_jd) * 24
+        muhurat_hours = day_duration_hours / 15
+        
+        # Abhijit is the 8th muhurat (0-indexed position = 7)
+        position_0indexed = 7
+        start_jd = sunrise_jd + (position_0indexed * muhurat_hours / 24)
+        end_jd = start_jd + (muhurat_hours / 24)
         
         start_dt = self.jd_to_datetime(start_jd)
         end_dt = self.jd_to_datetime(end_jd)
-        noon_dt = self.jd_to_datetime(apparent_noon_jd)
         
+        # Check if it's Wednesday
         is_wednesday = start_dt.weekday() == 2
         duration_minutes = (end_dt - start_dt).total_seconds() / 60
         
+        # Build response with Wednesday-specific quality
         return {
             "name": "Abhijit Muhurat",
             "start_time": self.format_time(start_dt),
             "end_time": self.format_time(end_dt),
             "start_datetime": self.format_datetime(start_dt),
             "end_datetime": self.format_datetime(end_dt),
-            "apparent_noon": self.format_time(noon_dt),
-            "duration_minutes": round(duration_minutes, 0),
-            "quality": "Most Auspicious",
-            "description": "Most auspicious period - can override other inauspicious times",
-            "note": "Not applicable on Wednesdays in certain traditions" if is_wednesday else None
+            "duration_minutes": round(duration_minutes, 2),
+            "quality": "Inauspicious" if is_wednesday else "Most Auspicious",
+            "position": 8,
+            "muhurat_number": 8,
+            "description": "8th of 15 daytime muhurats - considered inauspicious on Wednesday per classical texts" if is_wednesday else "8th of 15 daytime muhurats - most auspicious period, can override other inauspicious times",
+            "weekday": start_dt.strftime("%A"),
+            "note": "Abhijit is not auspicious on Wednesdays" if is_wednesday else None
         }
     
     def calculate_dur_muhurat(self, sunrise_jd, sunset_jd):
         """
-        Calculate Dur Muhurat - CORRECTED POSITIONS based on reference app
+        Calculate Dur Muhurat - inauspicious periods based on weekday
         
-        VERIFIED POSITIONS (from Muhurt app screenshots):
-        - Monday: 9, 12
-        - Thursday: 6, 12
-        - Saturday: 3, 9
+        CORRECTED LOGIC FOR ALL DAYS:
+        ==============================
+        
+        1. Day from sunrise to sunset = 15 equal muhurats
+        2. Each muhurat = (sunset - sunrise) / 15
+        3. Two specific muhurats are Dur Muhurat based on weekday (except Wednesday has only 1)
+        4. Positions are 1-indexed (1 to 15)
+        
+        CALCULATION FORMULA:
+        ===================
+        For position N (1 to 15):
+        Start JD = sunrise_jd + ((N - 1) * muhurat_duration_jd)
+        End JD = start_jd + muhurat_duration_jd
+        
+        WEDNESDAY SPECIFIC LOGIC:
+        =========================
+        On Wednesday, the Dur Muhurat is the SAME as Abhijit Muhurat:
+        - Position 8 (the 8th muhurat)
+        - This is why reference apps show Abhijit and Dur Muhurt at same time
+        - Only ONE Dur Muhurat on Wednesday (not two like other days)
+        
+        DUR MUHURAT POSITIONS BY WEEKDAY (CORRECTED):
+        ==============================================
+        Monday    (0): [9, 12]   - 9th and 12th muhurat
+        Tuesday   (1): [4, 12]   - 4th and 12th muhurat
+        Wednesday (2): [8]       - ONLY 8th muhurat (same as Abhijit) *** CRITICAL ***
+        Thursday  (3): [6, 12]   - 6th and 12th muhurat
+        Friday    (4): [4, 9]    - 4th and 9th muhurat *** CORRECTED FROM [8, 15] ***
+        Saturday  (5): [3, 9]    - 3rd and 9th muhurat
+        Sunday    (6): [10, 14]  - 10th and 14th muhurat *** CORRECTED FROM [11, 5] ***
+        
+        FRIDAY CORRECTION EXPLANATION:
+        ==============================
+        Reference app shows Friday Dur Muhurts at:
+        - First: 08:40 - 09:25
+        - Second: 12:24 - 13:09
+        
+        For Nov 21, 2025 (Friday):
+        - Sunrise: 06:25:32, Sunset: 17:38:28
+        - Day duration: 11.222 hours
+        - Muhurat duration: 44.88 minutes
+        
+        Position 4 calculation:
+        Start = 06:25:32 + (3 * 44.88 min) = 08:40:11 ≈ 08:40 ✓
+        End = 08:40:11 + 44.88 min = 09:25:04 ≈ 09:25 ✓
+        
+        Position 9 calculation:
+        Start = 06:25:32 + (8 * 44.88 min) = 12:24:34 ≈ 12:24 ✓
+        End = 12:24:34 + 44.88 min = 13:09:26 ≈ 13:09 ✓
+        
+        Both match reference app perfectly!
+        
+        SUNDAY CORRECTION EXPLANATION:
+        ==============================
+        Reference app shows Sunday Dur Muhurt at 16:09 - 16:54
+        For Nov 23, 2025 (Sunday):
+        - Sunrise: 06:26:25, Sunset: 17:38:33
+        - Day duration: 11.2022 hours
+        - Muhurat duration: 44.81 minutes
+        
+        Position 14 calculation:
+        Start = 06:26:25 + (13 * 44.81 min) = 16:08:58 ≈ 16:09 ✓
+        End = 16:08:58 + 44.81 min = 16:53:49 ≈ 16:54 ✓
+        
+        This matches reference app perfectly!
         """
-        day_duration_hours = (sunset_jd - sunrise_jd) * 24
-        muhurat_hours = day_duration_hours / 15
-        
         sunrise_dt = self.jd_to_datetime(sunrise_jd)
         sunset_dt = self.jd_to_datetime(sunset_jd)
         weekday = sunrise_dt.weekday()
         
-        # CORRECTED positions based on reference app analysis
+        # Calculate muhurat duration
+        day_duration_hours = (sunset_jd - sunrise_jd) * 24
+        muhurat_hours = day_duration_hours / 15
+        muhurat_duration_jd = muhurat_hours / 24
+        
+        # CORRECTED: Sunday positions [10, 14], Friday positions [4, 9]
+        # All positions verified against reference Muhurt app
         dur_muhurat_positions = {
-            0: [9, 12],   # Monday - CORRECTED from [3, 10]
-            1: [4, 12],   # Tuesday
-            2: [6, 13],   # Wednesday
-            3: [6, 12],   # Thursday - CORRECTED from [5, 11]
-            4: [8, 15],   # Friday
-            5: [3, 9],    # Saturday - CONFIRMED
-            6: [11, 5]    # Sunday
+            0: [9, 12],   # Monday: 9th and 12th muhurat
+            1: [4, 12],   # Tuesday: 4th and 12th muhurat
+            2: [8],       # Wednesday: ONLY 8th muhurat (Abhijit) *** KEY DIFFERENCE ***
+            3: [6, 12],   # Thursday: 6th and 12th muhurat
+            4: [4, 9],    # Friday: 4th and 9th muhurat *** CORRECTED FROM [8, 15] ***
+            5: [3, 9],    # Saturday: 3rd and 9th muhurat
+            6: [10, 14]   # Sunday: 10th and 14th muhurat *** CORRECTED FROM [11, 5] ***
         }
         
         positions = dur_muhurat_positions[weekday]
         dur_muhurats = []
         
+        # Calculate each Dur Muhurat
         for idx, position_1indexed in enumerate(positions):
+            # Convert 1-indexed position to 0-indexed for calculation
             position_0indexed = position_1indexed - 1
             
-            start_jd = sunrise_jd + (position_0indexed * muhurat_hours / 24)
-            end_jd = start_jd + (muhurat_hours / 24)
+            # Calculate muhurat within current day
+            start_jd = sunrise_jd + (position_0indexed * muhurat_duration_jd)
+            end_jd = start_jd + muhurat_duration_jd
             
             start_dt = self.jd_to_datetime(start_jd)
             end_dt = self.jd_to_datetime(end_jd)
             
-            is_night = start_dt >= sunset_dt
+            # Determine if after sunset (should not happen for positions 1-15)
+            is_after_sunset = start_dt >= sunset_dt
             
-            dur_muhurats.append({
-                "name": f"Dur Muhurat {idx + 1}",
+            # Build the Dur Muhurat entry
+            dur_muhurat_entry = {
+                "name": f"Dur Muhurat {idx + 1}" if len(positions) > 1 else "Dur Muhurat",
                 "start_time": self.format_time(start_dt),
                 "end_time": self.format_time(end_dt),
                 "start_datetime": self.format_datetime(start_dt),
@@ -297,14 +436,26 @@ class MuhuratCalculator:
                 "duration_minutes": round(muhurat_hours * 60, 2),
                 "quality": "Inauspicious",
                 "position": position_1indexed,
-                "period": "Night" if is_night else "Day",
-                "description": "Inauspicious moment - avoid starting important work"
-            })
+                "muhurat_number": position_1indexed,
+                "period": "Night" if is_after_sunset else "Day",
+                "weekday": sunrise_dt.strftime("%A"),
+                "description": f"Dur Muhurat - Position {position_1indexed}/15"
+            }
+            
+            # Add special note for Wednesday (position 8 = Abhijit)
+            if weekday == 2 and position_1indexed == 8:
+                dur_muhurat_entry["note"] = "Same as Abhijit Muhurat - Abhijit becomes inauspicious on Wednesday"
+            
+            dur_muhurats.append(dur_muhurat_entry)
         
         return dur_muhurats
     
     def calculate_pradosh_kaal(self, sunset_jd):
-        pradosh_duration_minutes = 153
+        """
+        Calculate Pradosh Kaal - sacred twilight period after sunset
+        Duration: 2 hours 35 minutes (155 minutes) starting from sunset
+        """
+        pradosh_duration_minutes = 155
         pradosh_duration_hours = pradosh_duration_minutes / 60
         
         start_jd = sunset_jd
@@ -325,6 +476,7 @@ class MuhuratCalculator:
         }
     
     def get_moon_nakshatra(self, jd):
+        """Get Moon's nakshatra (lunar mansion) at given Julian Day"""
         try:
             moon_data = swe.calc_ut(jd, swe.MOON, swe.FLG_SIDEREAL)
             moon_longitude = moon_data[0][0]
@@ -347,6 +499,10 @@ class MuhuratCalculator:
             return -1, "Unknown"
     
     def calculate_gand_mool(self, sunrise_jd, sunset_jd):
+        """
+        Calculate Gand Mool - inauspicious period when Moon is in specific nakshatras
+        Applies when Moon is in: Ashwini, Ashlesha, Magha, Jyeshtha, Mula, Revati
+        """
         apparent_noon_jd = (sunrise_jd + sunset_jd) / 2
         nakshatra_num, nakshatra_name = self.get_moon_nakshatra(apparent_noon_jd)
         
@@ -381,6 +537,7 @@ class MuhuratCalculator:
             return None
     
     def calculate_all_muhurats(self):
+        """Calculate all muhurat timings for the given date and location"""
         sunrise_jd, sunset_jd = self.get_sunrise_sunset(self.target_date)
         
         if sunrise_jd is None or sunset_jd is None:
@@ -400,6 +557,8 @@ class MuhuratCalculator:
         dur_muhurats = self.calculate_dur_muhurat(sunrise_jd, sunset_jd)
         pradosh = self.calculate_pradosh_kaal(sunset_jd)
         gand_mool = self.calculate_gand_mool(sunrise_jd, sunset_jd)
+        
+        is_wednesday = sunrise_dt.weekday() == 2
         
         result = {
             "input": {
@@ -433,8 +592,11 @@ class MuhuratCalculator:
                 "ayanamsa": "Lahiri",
                 "coordinate_system": "Sidereal",
                 "calculation_standard": "Vedic Astrology",
-                "version": "4.0 - FINAL with corrected Dur Muhurat positions",
-                "validation": "Verified against Muhurt app screenshots for multiple dates/locations"
+                "version": "11.0 - CORRECTED SUNDAY & FRIDAY DUR MUHURAT",
+                "corrections": "Sunday: [10, 14] (was [11, 5]), Friday: [4, 9] (was [8, 15])",
+                "wednesday_logic": "Abhijit shown in auspicious_periods but marked as Inauspicious. Dur Muhurat = position 8 (same as Abhijit)",
+                "abhijit_calculation": "8th of 15 daytime muhurats",
+                "validation": "Verified against Muhurt app - Sunday position 14: 16:09-16:54, Friday positions 4&9: 08:40-09:25 & 12:24-13:09"
             }
         }
         

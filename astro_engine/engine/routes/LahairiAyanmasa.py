@@ -15,7 +15,8 @@ from astro_engine.engine.doshas.PitraDosha import pitra_dosha_analyze_combinatio
 from astro_engine.engine.doshas.SadiSatiDosha import ZODIAC_SIGNS, sade_sati_analyze_cancellation_factors, sade_sati_analyze_moon_strength, sade_sati_analyze_saturn_status, sade_sati_calculate_all_planets, sade_sati_calculate_ascendant, sade_sati_calculate_dhaiya, sade_sati_calculate_houses_whole_sign, sade_sati_calculate_intensity, sade_sati_calculate_julian_day, sade_sati_calculate_status, sade_sati_get_ayanamsa, sade_sati_get_intensity_interpretation, sade_sati_get_personalized_recommendations, sade_sati_get_planet_house
 from astro_engine.engine.doshas.ShariptaDosha import ShrapitDoshaAnalyzer, VedicChart
 from astro_engine.engine.natalCharts.Muhurthas import MuhuratCalculator
-from astro_engine.engine.natalCharts.Panchanga import calculate_choghadiya, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_hora, calculate_panchanga_elements, get_current_choghadiya, get_current_hora, get_current_lagna_timing
+from astro_engine.engine.natalCharts.Panchanga import calculate_choghadiya, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_hora, calculate_lagna_timings_vedic, calculate_panchanga_elements, get_current_choghadiya, get_current_hora, get_current_lagna_timing
+from astro_engine.engine.natalCharts.PanchangaOne import calculate_exact_moon_times_one, calculate_exact_sun_times_one, calculate_panchanga_elements_one
 from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_all_chart_remedies, lal_kitab_get_remedies_for_planet_house
 from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MINIMUM_SHADBALA, SIGN_LORDS, gemstone_calculate_ascendant, gemstone_calculate_houses_whole_sign, gemstone_calculate_planetary_positions, gemstone_calculate_shadbala_simplified, gemstone_calculate_vimshottari_dasha, gemstone_classify_functional_nature, gemstone_get_current_dasha, gemstone_get_julian_day, gemstone_get_planet_house, gemstone_get_positional_strength, gemstone_get_ruled_houses, gemstone_recommend_gemstones_enhanced
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
@@ -4601,80 +4602,170 @@ def api_chart_with_remedies():
 #   Panchanga calculations
 # 
 
+# @bp.route('/panchanga', methods=['POST'])
+# def calculate_complete_panchanga():
+#     """Complete Panchanga API Endpoint"""
+    
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"status": "error", "message": "No JSON data received"}), 400
+        
+#         required_fields = ["date", "time", "latitude", "longitude", "timezone"]
+#         missing_fields = [field for field in required_fields if field not in data]
+#         if missing_fields:
+#             return jsonify({"status": "error", 
+#                           "message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        
+#         try:
+#             date_str = str(data["date"]).strip()
+#             time_str = str(data["time"]).strip()
+#             latitude = float(data["latitude"])
+#             longitude = float(data["longitude"])
+#             timezone_str = str(data["timezone"]).strip()
+            
+#             if not (-90 <= latitude <= 90):
+#                 raise ValueError(f"Latitude must be between -90 and 90")
+#             if not (-180 <= longitude <= 180):
+#                 raise ValueError(f"Longitude must be between -180 and 180")
+#         except (ValueError, TypeError) as e:
+#             return jsonify({"status": "error", "message": f"Invalid data format: {str(e)}"}), 400
+        
+#         print(f"\n{'='*70}")
+#         print(f"REQUEST: {date_str} {time_str} ({timezone_str})")
+#         print(f"Location: {latitude}°N, {longitude}°E")
+        
+#         # Calculate all components
+#         panchanga = calculate_panchanga_elements(date_str, time_str, timezone_str)
+#         sun_times = calculate_exact_sun_times(date_str, time_str, latitude, longitude, timezone_str)
+#         moon_times = calculate_exact_moon_times(date_str, time_str, latitude, longitude, timezone_str)
+        
+#         if not sun_times or not moon_times:
+#             return jsonify({"status": "error", "message": "Skyfield calculation failed"}), 500
+        
+#         weekday = panchanga["weekday"]
+#         sunrise_dt = sun_times["sunrise_dt"]
+#         sunset_dt = sun_times["sunset_dt"]
+        
+#         murtha = calculate_exact_murtha_corrected(date_str, time_str, latitude, longitude, 
+#                                                   timezone_str, sunset_dt=sunset_dt)
+        
+#         print(f"✓ ALL CALCULATIONS COMPLETE")
+#         print(f"{'='*70}\n")
+        
+#         response_data = {
+#             "status": "success",
+#             "version": "panchanga_v1.0",
+#             "input": {"date": date_str, "time": time_str, "latitude": latitude, 
+#                      "longitude": longitude, "timezone": timezone_str},
+#             "panchanga": {"tithi": panchanga["tithi"], "nakshatra": panchanga["nakshatra"],
+#                          "yoga": panchanga["yoga"], "karana": panchanga["karana"], 
+#                          "vara": panchanga["vara"]},
+#             "times": {
+#                 "sunrise": {"time": sun_times['sunrise'], "method": "skyfield_exact"},
+#                 "sunset": {"time": sun_times['sunset'], "method": "skyfield_exact"},
+#                 "moonrise": {"time": moon_times['moonrise'], "method": "skyfield_exact"},
+#                 "moonset": {"time": moon_times['moonset'], "method": "skyfield_exact"}
+#             },
+#             "murtha": murtha if murtha else {"status": "calculation_failed"}
+#         }
+        
+#         return jsonify(response_data), 200
+        
+#     except Exception as e:
+#         print(f"ERROR: {e}")
+#         traceback.print_exc()
+#         return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
+
+
+
 @bp.route('/panchanga', methods=['POST'])
-def calculate_complete_panchanga():
-    """Complete Panchanga API Endpoint"""
+def calculate_panchanga():
+    """Main API endpoint with EXACT calculations"""
     
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({"status": "error", "message": "No JSON data received"}), 400
         
-        required_fields = ["date", "time", "latitude", "longitude", "timezone"]
-        missing_fields = [field for field in required_fields if field not in data]
-        if missing_fields:
-            return jsonify({"status": "error", 
-                          "message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
-        
-        try:
-            date_str = str(data["date"]).strip()
-            time_str = str(data["time"]).strip()
-            latitude = float(data["latitude"])
-            longitude = float(data["longitude"])
-            timezone_str = str(data["timezone"]).strip()
-            
-            if not (-90 <= latitude <= 90):
-                raise ValueError(f"Latitude must be between -90 and 90")
-            if not (-180 <= longitude <= 180):
-                raise ValueError(f"Longitude must be between -180 and 180")
-        except (ValueError, TypeError) as e:
-            return jsonify({"status": "error", "message": f"Invalid data format: {str(e)}"}), 400
+        date_str = str(data["date"]).strip()
+        time_str = str(data["time"]).strip()
+        latitude = float(data["latitude"])
+        longitude = float(data["longitude"])
+        timezone_str = str(data["timezone"]).strip()
         
         print(f"\n{'='*70}")
         print(f"REQUEST: {date_str} {time_str} ({timezone_str})")
         print(f"Location: {latitude}°N, {longitude}°E")
         
-        # Calculate all components
-        panchanga = calculate_panchanga_elements(date_str, time_str, timezone_str)
-        sun_times = calculate_exact_sun_times(date_str, time_str, latitude, longitude, timezone_str)
-        moon_times = calculate_exact_moon_times(date_str, time_str, latitude, longitude, timezone_str)
+        # Calculate Panchanga with transition times (using SUNRISE as reference)
+        panchanga = calculate_panchanga_elements_one(date_str, time_str, latitude, longitude, timezone_str)
+        
+        # Calculate sun/moon times
+        sun_times = calculate_exact_sun_times_one(date_str, time_str, latitude, longitude, timezone_str)
+        moon_times = calculate_exact_moon_times_one(date_str, time_str, latitude, longitude, timezone_str)
         
         if not sun_times or not moon_times:
-            return jsonify({"status": "error", "message": "Skyfield calculation failed"}), 500
+            return jsonify({
+                "status": "error",
+                "message": "Skyfield calculation failed. Install: pip install skyfield"
+            }), 500
         
-        weekday = panchanga["weekday"]
-        sunrise_dt = sun_times["sunrise_dt"]
-        sunset_dt = sun_times["sunset_dt"]
-        
-        murtha = calculate_exact_murtha_corrected(date_str, time_str, latitude, longitude, 
-                                                  timezone_str, sunset_dt=sunset_dt)
-        
-        print(f"✓ ALL CALCULATIONS COMPLETE")
+        print(f"\n✓ PANCHANGA CALCULATED (at sunrise)")
+        print(f"  Tithi: {panchanga['tithi']['name']} ends at {panchanga['tithi']['end_time']}")
+        print(f"  Nakshatra: {panchanga['nakshatra']['name']} ends at {panchanga['nakshatra']['end_time']}")
+        print(f"  Yoga: {panchanga['yoga']['name']} ends at {panchanga['yoga']['end_time']}")
+        print(f"  Karana: {panchanga['karana']['name']} ends at {panchanga['karana']['end_time']}")
         print(f"{'='*70}\n")
         
-        response_data = {
+        return jsonify({
             "status": "success",
-            "version": "panchanga_v1.0",
-            "input": {"date": date_str, "time": time_str, "latitude": latitude, 
-                     "longitude": longitude, "timezone": timezone_str},
-            "panchanga": {"tithi": panchanga["tithi"], "nakshatra": panchanga["nakshatra"],
-                         "yoga": panchanga["yoga"], "karana": panchanga["karana"], 
-                         "vara": panchanga["vara"]},
-            "times": {
-                "sunrise": {"time": sun_times['sunrise'], "method": "skyfield_exact"},
-                "sunset": {"time": sun_times['sunset'], "method": "skyfield_exact"},
-                "moonrise": {"time": moon_times['moonrise'], "method": "skyfield_exact"},
-                "moonset": {"time": moon_times['moonset'], "method": "skyfield_exact"}
+            "input": {
+                "date": date_str,
+                "time": time_str,
+                "latitude": latitude,
+                "longitude": longitude,
+                "timezone": timezone_str
             },
-            "murtha": murtha if murtha else {"status": "calculation_failed"}
-        }
-        
-        return jsonify(response_data), 200
+            "panchanga": panchanga,
+            "times": {
+                "sunrise": {
+                    "time": sun_times['sunrise'],
+                    "method": sun_times['method'],
+                    "status": "exact"
+                },
+                "sunset": {
+                    "time": sun_times['sunset'],
+                    "method": sun_times['method'],
+                    "status": "exact"
+                },
+                "moonrise": {
+                    "time": moon_times.get('moonrise'),
+                    "time_24plus": moon_times.get('moonrise_24plus'),
+                    "date": moon_times.get('moonrise_date'),
+                    "method": moon_times.get('method'),
+                    "status": "exact" if moon_times.get('on_target_date') else "next_day",
+                    "note": moon_times.get('note')
+                },
+                "moonset": {
+                    "time": moon_times.get('moonset'),
+                    "date": moon_times.get('moonset_date'),
+                    "method": moon_times.get('method'),
+                    "status": "exact"
+                }
+            },
+            "note": "Panchanga calculated at sunrise (Vedic day starts at sunrise)"
+        })
         
     except Exception as e:
         print(f"ERROR: {e}")
+        import traceback
         traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+
 
 @bp.route('/choghadiya_times', methods=['POST'])
 def calculate_choghadiya_endpoint():
@@ -4879,100 +4970,100 @@ def calculate_hora_endpoint():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
 
-# @bp.route('/lagna_times', methods=['POST'])
-# def calculate_lagna_endpoint():
-#     """Lagna (Ascendant) Timings API Endpoint - Vedic Day (Sunrise to Sunrise)"""
+@bp.route('/lagna_times', methods=['POST'])
+def calculate_lagna_endpoint():
+    """Lagna (Ascendant) Timings API Endpoint - Vedic Day (Sunrise to Sunrise)"""
     
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"status": "error", "message": "No JSON data received"}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No JSON data received"}), 400
         
-#         required_fields = ["date", "latitude", "longitude", "timezone"]
-#         missing_fields = [field for field in required_fields if field not in data]
-#         if missing_fields:
-#             return jsonify({"status": "error", 
-#                           "message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        required_fields = ["date", "latitude", "longitude", "timezone"]
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return jsonify({"status": "error", 
+                          "message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
         
-#         try:
-#             date_str = str(data["date"]).strip()
-#             time_str = str(data.get("time", "12:00:00")).strip()
-#             latitude = float(data["latitude"])
-#             longitude = float(data["longitude"])
-#             timezone_str = str(data["timezone"]).strip()
+        try:
+            date_str = str(data["date"]).strip()
+            time_str = str(data.get("time", "12:00:00")).strip()
+            latitude = float(data["latitude"])
+            longitude = float(data["longitude"])
+            timezone_str = str(data["timezone"]).strip()
             
-#             if not (-90 <= latitude <= 90):
-#                 raise ValueError(f"Latitude must be between -90 and 90")
-#             if not (-180 <= longitude <= 180):
-#                 raise ValueError(f"Longitude must be between -180 and 180")
-#         except (ValueError, TypeError) as e:
-#             return jsonify({"status": "error", "message": f"Invalid data format: {str(e)}"}), 400
+            if not (-90 <= latitude <= 90):
+                raise ValueError(f"Latitude must be between -90 and 90")
+            if not (-180 <= longitude <= 180):
+                raise ValueError(f"Longitude must be between -180 and 180")
+        except (ValueError, TypeError) as e:
+            return jsonify({"status": "error", "message": f"Invalid data format: {str(e)}"}), 400
         
-#         print(f"\n{'='*70}")
-#         print(f"LAGNA TIMINGS REQUEST (VEDIC DAY): {date_str} {time_str}")
-#         print(f"Location: {latitude}°N, {longitude}°E ({timezone_str})")
+        print(f"\n{'='*70}")
+        print(f"LAGNA TIMINGS REQUEST (VEDIC DAY): {date_str} {time_str}")
+        print(f"Location: {latitude}°N, {longitude}°E ({timezone_str})")
         
-#         if "time" in data:
-#             lagna_data = get_current_lagna_timing(date_str, time_str, latitude, longitude, timezone_str)
+        if "time" in data:
+            lagna_data = get_current_lagna_timing(date_str, time_str, latitude, longitude, timezone_str)
             
-#             print(f"✓ LAGNA TIMING CALCULATION COMPLETE (VEDIC DAY)")
-#             print(f"{'='*70}\n")
+            print(f"✓ LAGNA TIMING CALCULATION COMPLETE (VEDIC DAY)")
+            print(f"{'='*70}\n")
             
-#             response_data = {
-#                 "status": "success",
-#                 "version": "lagna_timings_vedic_v2.0",
-#                 "input": {
-#                     "date": date_str, "time": time_str, "latitude": latitude,
-#                     "longitude": longitude, "timezone": timezone_str
-#                 },
-#                 "current_lagna": lagna_data["current_lagna"],
-#                 "next_lagna": lagna_data["next_lagna"],
-#                 "vedic_day_info": lagna_data["vedic_day_info"],
-#                 "full_day_schedule": lagna_data["full_day_schedule"],
-#                 "guide": {
-#                     "calculation_method": "Vedic Day (Sunrise to Sunrise)",
-#                     "note": "Traditional Vedic astrology defines a day from sunrise to sunrise, not midnight to midnight",
-#                     "time_format": "Times after midnight shown in 24+ hour format (e.g., 24:44 = 00:44 next day)",
-#                     "best_lagna_for_activities": {
-#                         "marriage": "Taurus, Libra (Venus signs) - Check start_time_vedic",
-#                         "business": "Gemini, Virgo (Mercury signs) - Check start_time_vedic",
-#                         "property": "Taurus, Cancer (stable signs) - Check start_time_vedic",
-#                         "education": "Gemini, Sagittarius, Pisces - Check start_time_vedic",
-#                         "spiritual": "Sagittarius, Pisces (Jupiter signs) - Check start_time_vedic"
-#                     }
-#                 }
-#             }
-#         else:
-#             full_schedule = calculate_lagna_timings_vedic(date_str, latitude, longitude, timezone_str)
+            response_data = {
+                "status": "success",
+                "version": "lagna_timings_vedic_v2.0",
+                "input": {
+                    "date": date_str, "time": time_str, "latitude": latitude,
+                    "longitude": longitude, "timezone": timezone_str
+                },
+                "current_lagna": lagna_data["current_lagna"],
+                "next_lagna": lagna_data["next_lagna"],
+                "vedic_day_info": lagna_data["vedic_day_info"],
+                "full_day_schedule": lagna_data["full_day_schedule"],
+                "guide": {
+                    "calculation_method": "Vedic Day (Sunrise to Sunrise)",
+                    "note": "Traditional Vedic astrology defines a day from sunrise to sunrise, not midnight to midnight",
+                    "time_format": "Times after midnight shown in 24+ hour format (e.g., 24:44 = 00:44 next day)",
+                    "best_lagna_for_activities": {
+                        "marriage": "Taurus, Libra (Venus signs) - Check start_time_vedic",
+                        "business": "Gemini, Virgo (Mercury signs) - Check start_time_vedic",
+                        "property": "Taurus, Cancer (stable signs) - Check start_time_vedic",
+                        "education": "Gemini, Sagittarius, Pisces - Check start_time_vedic",
+                        "spiritual": "Sagittarius, Pisces (Jupiter signs) - Check start_time_vedic"
+                    }
+                }
+            }
+        else:
+            full_schedule = calculate_lagna_timings_vedic(date_str, latitude, longitude, timezone_str)
             
-#             print(f"✓ FULL VEDIC DAY LAGNA SCHEDULE COMPLETE")
-#             print(f"{'='*70}\n")
+            print(f"✓ FULL VEDIC DAY LAGNA SCHEDULE COMPLETE")
+            print(f"{'='*70}\n")
             
-#             response_data = {
-#                 "status": "success",
-#                 "version": "lagna_timings_vedic_v2.0",
-#                 "input": {
-#                     "date": date_str, "latitude": latitude,
-#                     "longitude": longitude, "timezone": timezone_str
-#                 },
-#                 "lagna_schedule": full_schedule["lagna_schedule"],
-#                 "vedic_day_info": full_schedule["vedic_day"],
-#                 "summary": full_schedule["summary"],
-#                 "guide": {
-#                     "calculation_method": "Vedic Day (Sunrise to Sunrise)",
-#                     "usage": "Lagna schedule from sunrise to sunrise (traditional Vedic day)",
-#                     "time_format": "start_time_vedic shows 24+ hour format for times after midnight",
-#                     "example": "24:44 means 00:44 of next calendar day (but same Vedic day)",
-#                     "reference": "Matches traditional apps like Drik Panchang, Muhurt"
-#                 }
-#             }
+            response_data = {
+                "status": "success",
+                "version": "lagna_timings_vedic_v2.0",
+                "input": {
+                    "date": date_str, "latitude": latitude,
+                    "longitude": longitude, "timezone": timezone_str
+                },
+                "lagna_schedule": full_schedule["lagna_schedule"],
+                "vedic_day_info": full_schedule["vedic_day"],
+                "summary": full_schedule["summary"],
+                "guide": {
+                    "calculation_method": "Vedic Day (Sunrise to Sunrise)",
+                    "usage": "Lagna schedule from sunrise to sunrise (traditional Vedic day)",
+                    "time_format": "start_time_vedic shows 24+ hour format for times after midnight",
+                    "example": "24:44 means 00:44 of next calendar day (but same Vedic day)",
+                    "reference": "Matches traditional apps like Drik Panchang, Muhurt"
+                }
+            }
         
-#         return jsonify(response_data), 200
+        return jsonify(response_data), 200
         
-#     except Exception as e:
-#         print(f"ERROR: {e}")
-#         traceback.print_exc()
-#         return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
+    except Exception as e:
+        print(f"ERROR: {e}")
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
 
 
 
@@ -4981,6 +5072,37 @@ def calculate_hora_endpoint():
 
 @bp.route('/muhurat', methods=['POST'])
 def calculate_muhurat():
+    """
+    Calculate all Vedic Muhurat timings for given date, time and location
+    
+    Request Body (JSON):
+    {
+        "date": "YYYY-MM-DD",
+        "time": "HH:MM:SS",
+        "latitude": float,
+        "longitude": float,
+        "timezone": "Timezone/String"
+    }
+    
+    Returns:
+    {
+        "input": {...},
+        "sun_timings": {...},
+        "auspicious_periods": {
+            "abhijit_muhurat": {...},  // Quality = "Inauspicious" on Wednesday
+            "pradosh_kaal": {...}
+        },
+        "inauspicious_periods": {
+            "rahu_kaal": {...},
+            "yamaganda_kaal": {...},
+            "gulika_kaal": {...},
+            "dur_muhurats": [...],  // Only 1 on Wednesday (position 8), 2 on other days
+            "gand_mool": {...}  // Optional, only if Moon in Gand Mool nakshatra
+        },
+        "weekday": "...",
+        "calculation_method": {...}
+    }
+    """
     try:
         data = request.get_json()
         
@@ -5013,7 +5135,6 @@ def calculate_muhurat():
             "details": str(e)
         }), 400
     except Exception as e:
-        import traceback
         return jsonify({
             "error": "Internal server error",
             "details": str(e),
@@ -5021,23 +5142,5 @@ def calculate_muhurat():
         }), 500
 
 
-@bp.route('/', methods=['GET'])
-def root():
-    return jsonify({
-        "service": "Vedic Muhurat Calculator API",
-        "version": "4.0",
-        "description": "Calculate Vedic Muhurat timings for any location and date",
-        "endpoints": {
-            "/muhurat": "POST - Calculate Muhurat timings",
-            "/health": "GET - Health check"
-        },
-        "example_request": {
-            "date": "2025-11-20",
-            "time": "08:00:00",
-            "latitude": 19.04,
-            "longitude": 73.02,
-            "timezone": "Asia/Kolkata"
-        }
-    }), 200
 
 
