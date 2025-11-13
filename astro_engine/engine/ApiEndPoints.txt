@@ -140,6 +140,15 @@ http://localhost:5000/lahiri/vedic_remedies
 http://localhost:5000/lahiri/calculate-gemstone
 http://localhost:5000/lahiri/lal-kitab-remedies
 
+****************  Pnchanga *****************
+http://localhost:5000/panchanga
+http://localhost:5000/choghadiya_times
+http://localhost:5000/hora_times
+http://localhost:5000/lagna_times
+http://localhost:5000/muhurat
+
+
+
 
 
 -------------------------------------------------------------------------------------------------
