@@ -15,6 +15,7 @@ from astro_engine.engine.doshas.PitraDosha import pitra_dosha_analyze_combinatio
 from astro_engine.engine.doshas.SadiSatiDosha import ZODIAC_SIGNS, sade_sati_analyze_cancellation_factors, sade_sati_analyze_moon_strength, sade_sati_analyze_saturn_status, sade_sati_calculate_all_planets, sade_sati_calculate_ascendant, sade_sati_calculate_dhaiya, sade_sati_calculate_houses_whole_sign, sade_sati_calculate_intensity, sade_sati_calculate_julian_day, sade_sati_calculate_status, sade_sati_get_ayanamsa, sade_sati_get_intensity_interpretation, sade_sati_get_personalized_recommendations, sade_sati_get_planet_house
 from astro_engine.engine.doshas.ShariptaDosha import ShrapitDoshaAnalyzer, VedicChart
 from astro_engine.engine.natalCharts.Muhurthas import MuhuratCalculator
+from astro_engine.engine.natalCharts.PanchagaMonth import calculate_days_panchanga
 from astro_engine.engine.natalCharts.Panchanga import calculate_choghadiya, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_hora, calculate_lagna_timings_vedic, calculate_panchanga_elements, get_current_choghadiya, get_current_hora, get_current_lagna_timing
 from astro_engine.engine.natalCharts.PanchangaOne import calculate_exact_moon_times_one, calculate_exact_sun_times_one, calculate_panchanga_elements_one
 from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_all_chart_remedies, lal_kitab_get_remedies_for_planet_house
@@ -1483,11 +1484,23 @@ def lahiri_hora_calculate_hora_lagna_chart():
         return jsonify({"error": str(e)}), 500
 
 
+# **********************************************************************************************************
+#           Numerology in vedic astrology - Chaldean and Lo Shu Grid
+# **********************************************************************************************************
 
 
 # Chaldean Numerology
-@bp.route('/lahiri/chaldean_numerology', methods=['POST'])
-def numerology():
+
+# @bp.route('/lahiri/chaldean_numerology', methods=['POST'])
+
+# def numerology():
+    """"
+        {
+            "name": "Astro Corp",   (required)
+            "tagline": "Guiding Your Stars", ( optional)
+            "founding_date": "2024-01-15"   (optional)
+        }
+    """
     try:
         data = request.get_json()
         if not data or 'name' not in data:
@@ -1563,6 +1576,125 @@ def numerology():
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+@bp.route('/lahiri/chaldean_numerology', methods=['POST'])
+def numerology():
+    """
+                        {
+            "name": "Astro Corp",
+            "tagline": "Guiding Your Stars",
+            "founding_date": "2024-01-15"
+        }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data:
+            return jsonify({"error": "Missing 'name' in JSON data"}), 400
+        name = data['name']
+        if not isinstance(name, str):
+            return jsonify({"error": "'name' must be a string"}), 400
+
+        # Calculate numbers for the name (personal interpretation)
+        numbers = calculate_chaldean_numbers(name)
+        compound_number = numbers['compound_number']
+        root_number = numbers['root_number']
+        element = get_element_from_number(root_number)
+        personal_interpretation = personal_interpretations.get(root_number, "No interpretation available.")
+        ruling_planet = ruling_planets.get(root_number, "Unknown")
+        insight = planet_insights.get(ruling_planet, {"positive": "N/A", "challenge": "N/A", "business_tip": "N/A"})
+        colors = number_colors.get(root_number, [])
+        gemstone = number_gemstones.get(root_number, "N/A")
+        day = planet_days.get(ruling_planet, "N/A")
+
+        # Base response for personal numerology
+        response = {
+            "original_name": name,
+            "compound_number": compound_number,
+            "root_number": root_number,
+            "element": element,
+            "ruling_planet": ruling_planet,
+            "personal_interpretation": personal_interpretation,
+            "astrological_insight": {
+                "positive": insight["positive"],
+                "challenge": insight["challenge"]
+            },
+            "recommendations": {
+                "colors": colors,
+                "gemstone": gemstone,
+                "auspicious_day": day
+            }
+        }
+
+        # Handle optional tagline for enhanced business interpretation
+        if 'tagline' in data:
+            tagline = data['tagline']
+            if isinstance(tagline, str):
+                tagline_numbers = calculate_chaldean_numbers(tagline)
+                tagline_compound = tagline_numbers['compound_number']
+                tagline_root = tagline_numbers['root_number']
+                tagline_element = get_element_from_number(tagline_root)
+                business_interpretation = business_interpretations.get(tagline_root, "No interpretation available.")
+                tagline_planet = ruling_planets.get(tagline_root, "Unknown")
+                tagline_insight = planet_insights.get(tagline_planet, {"positive": "N/A", "challenge": "N/A", "business_tip": "N/A"})
+                compatibility = get_elemental_compatibility(element, tagline_element)
+                response["business_tagline"] = {
+                    "original": tagline,
+                    "compound_number": tagline_compound,
+                    "root_number": tagline_root,
+                    "element": tagline_element,
+                    "ruling_planet": tagline_planet,
+                    "business_interpretation": business_interpretation,
+                    "astrological_insight": {
+                        "positive": tagline_insight["positive"],
+                        "challenge": tagline_insight["challenge"],
+                        "business_tip": tagline_insight["business_tip"]
+                    },
+                    "compatibility_with_personal": f"Personal ({element}) vs. Business ({tagline_element}): {compatibility}",
+                    "recommendations": {
+                        "colors": number_colors.get(tagline_root, []),
+                        "gemstone": number_gemstones.get(tagline_root, "N/A"),
+                        "auspicious_day": planet_days.get(tagline_planet, "N/A")
+                    }
+                }
+            else:
+                response["tagline_error"] = "'tagline' must be a string"
+
+        # Handle optional founding_date
+        if 'founding_date' in data:
+            founding_date = data['founding_date']
+            date_numerology = calculate_date_numerology(founding_date)
+            sun_sign = get_sun_sign(founding_date)
+            if date_numerology is not None and sun_sign is not None:
+                date_element = get_element_from_number(date_numerology)
+                sun_sign_element = get_sun_sign_element(sun_sign)
+                # Compatibility with personal name or business tagline
+                if 'business_tagline' in response:
+                    tagline_element = response["business_tagline"]["element"]
+                    numerology_compatibility = get_elemental_compatibility(tagline_element, date_element)
+                else:
+                    numerology_compatibility = get_elemental_compatibility(element, date_element)
+                sun_sign_influence = f"Sun in {sun_sign} ({sun_sign_element}): {sun_sign_insights.get(sun_sign, 'N/A')}"
+                response["founding_date"] = {
+                    "date": founding_date,
+                    "numerology": date_numerology,
+                    "element": date_element,
+                    "sun_sign": sun_sign,
+                    "sun_sign_element": sun_sign_element,
+                    "compatibility": f"Founding ({date_element}) vs. Reference ({tagline_element if 'business_tagline' in response else element}): {numerology_compatibility}",
+                    "sun_sign_influence": sun_sign_influence
+                }
+            else:
+                response["date_error"] = "Invalid founding_date format (use 'YYYY-MM-DD') or calculation error."
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
 
 # Lo Shu Grid Numerology
 @bp.route('/lahiri/lo_shu_grid_numerology', methods=['POST'])
@@ -4602,82 +4734,6 @@ def api_chart_with_remedies():
 #   Panchanga calculations
 # 
 
-# @bp.route('/panchanga', methods=['POST'])
-# def calculate_complete_panchanga():
-#     """Complete Panchanga API Endpoint"""
-    
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"status": "error", "message": "No JSON data received"}), 400
-        
-#         required_fields = ["date", "time", "latitude", "longitude", "timezone"]
-#         missing_fields = [field for field in required_fields if field not in data]
-#         if missing_fields:
-#             return jsonify({"status": "error", 
-#                           "message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
-        
-#         try:
-#             date_str = str(data["date"]).strip()
-#             time_str = str(data["time"]).strip()
-#             latitude = float(data["latitude"])
-#             longitude = float(data["longitude"])
-#             timezone_str = str(data["timezone"]).strip()
-            
-#             if not (-90 <= latitude <= 90):
-#                 raise ValueError(f"Latitude must be between -90 and 90")
-#             if not (-180 <= longitude <= 180):
-#                 raise ValueError(f"Longitude must be between -180 and 180")
-#         except (ValueError, TypeError) as e:
-#             return jsonify({"status": "error", "message": f"Invalid data format: {str(e)}"}), 400
-        
-#         print(f"\n{'='*70}")
-#         print(f"REQUEST: {date_str} {time_str} ({timezone_str})")
-#         print(f"Location: {latitude}°N, {longitude}°E")
-        
-#         # Calculate all components
-#         panchanga = calculate_panchanga_elements(date_str, time_str, timezone_str)
-#         sun_times = calculate_exact_sun_times(date_str, time_str, latitude, longitude, timezone_str)
-#         moon_times = calculate_exact_moon_times(date_str, time_str, latitude, longitude, timezone_str)
-        
-#         if not sun_times or not moon_times:
-#             return jsonify({"status": "error", "message": "Skyfield calculation failed"}), 500
-        
-#         weekday = panchanga["weekday"]
-#         sunrise_dt = sun_times["sunrise_dt"]
-#         sunset_dt = sun_times["sunset_dt"]
-        
-#         murtha = calculate_exact_murtha_corrected(date_str, time_str, latitude, longitude, 
-#                                                   timezone_str, sunset_dt=sunset_dt)
-        
-#         print(f"✓ ALL CALCULATIONS COMPLETE")
-#         print(f"{'='*70}\n")
-        
-#         response_data = {
-#             "status": "success",
-#             "version": "panchanga_v1.0",
-#             "input": {"date": date_str, "time": time_str, "latitude": latitude, 
-#                      "longitude": longitude, "timezone": timezone_str},
-#             "panchanga": {"tithi": panchanga["tithi"], "nakshatra": panchanga["nakshatra"],
-#                          "yoga": panchanga["yoga"], "karana": panchanga["karana"], 
-#                          "vara": panchanga["vara"]},
-#             "times": {
-#                 "sunrise": {"time": sun_times['sunrise'], "method": "skyfield_exact"},
-#                 "sunset": {"time": sun_times['sunset'], "method": "skyfield_exact"},
-#                 "moonrise": {"time": moon_times['moonrise'], "method": "skyfield_exact"},
-#                 "moonset": {"time": moon_times['moonset'], "method": "skyfield_exact"}
-#             },
-#             "murtha": murtha if murtha else {"status": "calculation_failed"}
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"ERROR: {e}")
-#         traceback.print_exc()
-#         return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
-
-
 
 @bp.route('/panchanga', methods=['POST'])
 def calculate_panchanga():
@@ -5140,6 +5196,59 @@ def calculate_muhurat():
             "details": str(e),
             "traceback": traceback.format_exc()
         }), 500
+
+
+
+#  Month Panchanga calculations
+
+
+@bp.route('/panchanga/month', methods=['POST'])
+def get_days_panchanga():
+    try:
+        data = request.get_json()
+        
+        date_str = str(data.get("date", "current")).strip()
+        num_days = int(data.get("days", 30))
+        lat = float(data["latitude"])
+        lon = float(data["longitude"])
+        tz_str = str(data["timezone"]).strip()
+        incl_trans = data.get("include_transitions", True)
+        parallel = data.get("parallel", True)
+        
+        if num_days < 1 or num_days > 366:
+            return jsonify({"status": "error", "message": "days must be 1-366"}), 400
+        
+        results = calculate_days_panchanga(date_str, num_days, lat, lon, tz_str, incl_trans, parallel)
+        
+        if date_str.lower() == "current":
+            actual_start = datetime.now().strftime('%Y-%m-%d')
+        else:
+            actual_start = date_str
+        
+        start_date = datetime.strptime(actual_start, '%Y-%m-%d')
+        end_date = start_date + timedelta(days=num_days - 1)
+        
+        return jsonify({
+            "status": "success",
+            "input": {
+                "start_date": actual_start,
+                "end_date": end_date.strftime('%Y-%m-%d'),
+                "days_count": num_days,
+                "latitude": lat,
+                "longitude": lon,
+                "timezone": tz_str,
+                "include_transitions": incl_trans
+            },
+            "panchanga_data": results,
+            "calculation_method": "true_drik_panchang_logic",
+            "note": "Shows first moonrise/moonset on each calendar date"
+        })
+        
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 
