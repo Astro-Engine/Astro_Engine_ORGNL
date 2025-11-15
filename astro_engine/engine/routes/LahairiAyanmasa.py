@@ -18,6 +18,7 @@ from astro_engine.engine.natalCharts.Muhurthas import MuhuratCalculator
 from astro_engine.engine.natalCharts.PanchagaMonth import calculate_days_panchanga
 from astro_engine.engine.natalCharts.Panchanga import calculate_choghadiya, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_hora, calculate_lagna_timings_vedic, calculate_panchanga_elements, get_current_choghadiya, get_current_hora, get_current_lagna_timing
 from astro_engine.engine.natalCharts.PanchangaOne import calculate_exact_moon_times_one, calculate_exact_sun_times_one, calculate_panchanga_elements_one
+from astro_engine.engine.numerology.PersonNumrology import analyze_prime_significance, calculate_chara_karakas, calculate_destiny_number, calculate_name_number, calculate_number_compatibility, calculate_personality_number, calculate_soul_urge_number, calculate_sun_sign, get_compatibility_matrix, get_natural_karaka_planets, get_ruling_planet_info
 from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_all_chart_remedies, lal_kitab_get_remedies_for_planet_house
 from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MINIMUM_SHADBALA, SIGN_LORDS, gemstone_calculate_ascendant, gemstone_calculate_houses_whole_sign, gemstone_calculate_planetary_positions, gemstone_calculate_shadbala_simplified, gemstone_calculate_vimshottari_dasha, gemstone_classify_functional_nature, gemstone_get_current_dasha, gemstone_get_julian_day, gemstone_get_planet_house, gemstone_get_positional_strength, gemstone_get_ruled_houses, gemstone_recommend_gemstones_enhanced
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
@@ -1694,7 +1695,125 @@ def numerology():
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
+#  Person numerology
 
+
+@bp.route('/lahiri/numerology', methods=['POST'])
+def numerology_api():
+    """
+    Single comprehensive numerology API endpoint
+    Handles all numerology calculations based on input parameters
+    """
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Initialize response
+        response = {
+            'status': 'success',
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Extract common parameters
+        name = data.get('name')
+        birth_date = data.get('birth_date')
+        birth_time = data.get('birth_time', '12:00')
+        latitude = data.get('latitude', 0.0)
+        longitude = data.get('longitude', 0.0)
+        
+        # 1. NAME NUMBER
+        if name:
+            response['name_number'] = calculate_name_number(name)
+        
+        # 2. DESTINY NUMBER
+        if birth_date:
+            response['destiny_number'] = calculate_destiny_number(birth_date)
+        
+        # 3. SOUL URGE NUMBER
+        if name:
+            response['soul_urge_number'] = calculate_soul_urge_number(name)
+        
+        # 4. PERSONALITY NUMBER
+        if name:
+            response['personality_number'] = calculate_personality_number(name)
+        
+        # 5. PRIME ANALYSIS
+        if name:
+            compound_num = calculate_name_number(name)['compound_number']
+            response['prime_analysis'] = analyze_prime_significance(compound_num)
+        
+        # 6. NATURAL KARAKA PLANETS
+        response['natural_karaka_planets'] = get_natural_karaka_planets()
+        
+        # 7. CHARA KARAKAS (if birth details provided)
+        if birth_date:
+            try:
+                response['chara_karakas'] = calculate_chara_karakas(
+                    birth_date, birth_time, latitude, longitude
+                )
+            except Exception as e:
+                response['chara_karakas_error'] = f"Could not calculate: {str(e)}"
+        
+        # 8. COMPATIBILITY MATRIX
+        response['compatibility_matrix'] = get_compatibility_matrix()
+        
+        # 9. NUMBER COMPATIBILITY (if both numbers provided)
+        number1 = data.get('number1')
+        number2 = data.get('number2')
+        if number1 is not None and number2 is not None:
+            try:
+                response['number_compatibility'] = calculate_number_compatibility(
+                    int(number1), int(number2)
+                )
+            except Exception as e:
+                response['compatibility_error'] = str(e)
+        
+        # 10. PLANETARY INFO (for name number and destiny number)
+        if name:
+            name_root = calculate_name_number(name)['root_number']
+            response['name_number_planetary_info'] = get_ruling_planet_info(name_root)
+        
+        if birth_date:
+            destiny_root = calculate_destiny_number(birth_date)['destiny_number']
+            response['destiny_number_planetary_info'] = get_ruling_planet_info(destiny_root)
+        
+        # 11. SUN SIGN (if birth details provided)
+        if birth_date:
+            try:
+                response['sun_sign'] = calculate_sun_sign(
+                    birth_date, birth_time, latitude, longitude
+                )
+            except Exception as e:
+                response['sun_sign_error'] = f"Could not calculate: {str(e)}"
+        
+        # 12. LIFE SUMMARY
+        if name and birth_date:
+            name_num = calculate_name_number(name)
+            destiny_num = calculate_destiny_number(birth_date)
+            soul_urge = calculate_soul_urge_number(name)
+            personality = calculate_personality_number(name)
+            
+            response['life_summary'] = {
+                'expression': f"You express yourself as {name_num['root_number']} - {name_num['meaning']}",
+                'life_path': f"Your destiny is {destiny_num['destiny_number']} - {destiny_num['meaning']}",
+                'inner_desire': f"You desire {soul_urge['soul_urge_number']} - {soul_urge['meaning']}",
+                'outer_impression': f"Others see you as {personality['personality_number']} - {personality['meaning']}"
+            }
+        
+        return jsonify(response)
+    
+    except ValueError as e:
+        return jsonify({
+            'status': 'error',
+            'error': f'Invalid input: {str(e)}'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': f'Server error: {str(e)}'
+        }), 
 
 # Lo Shu Grid Numerology
 @bp.route('/lahiri/lo_shu_grid_numerology', methods=['POST'])
