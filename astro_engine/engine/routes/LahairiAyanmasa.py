@@ -1698,7 +1698,7 @@ def numerology():
 #  Person numerology
 
 
-@bp.route('/lahiri/numerology', methods=['POST'])
+@bp.route('/lahiri/person_numerology', methods=['POST'])
 def numerology_api():
     """
     Single comprehensive numerology API endpoint
@@ -1951,7 +1951,7 @@ def calculate_vimshottari_antar_dasha():
 
 
 
-@bp.route('/lahiri/calculate_vimshottari_dasha_lahiri', methods=['POST'])
+@bp.route('/lahiri/prathythar_dasha_lahiri', methods=['POST'])
 def calculate_vimshottari_dasha_lahiri():
     """API endpoint to calculate Vimshottari Dasha up to Pratyantardasha level."""
     try:
@@ -2084,174 +2084,6 @@ def calculate_vimshottari_dasha():
 
 
 #  Dasha reports wise dates segregation 
-
-# @bp.route('/dasha_for_day', methods=['POST'])
-# def dasha_for_day():
-#     """API endpoint to get dasha sequence for previous day and current day."""
-#     try:
-#         data = request.get_json()
-#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not data or not all(field in data for field in required_fields):
-#             return create_json_response({"error": "Missing required fields"}, 400)
-
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         tz_offset = float(data['timezone_offset'])
-        
-#         # Get target date (default to current date if not provided)
-#         target_date_str = data.get('target_date', datetime.now().strftime('%Y-%m-%d'))
-#         target_date = datetime.strptime(target_date_str, '%Y-%m-%d')
-        
-#         # Calculate previous day
-#         previous_date = target_date - timedelta(days=1)
-
-#         # Get complete dasha calculation
-#         dasha_data = get_complete_vimshottari_dasha(birth_date, birth_time, tz_offset)
-        
-#         # Get dasha for previous day
-#         previous_jd = date_str_to_jd(previous_date.strftime('%Y-%m-%d'))
-#         previous_day_dashas = find_dasha_levels_at_date(dasha_data['mahadasha_periods'], previous_jd)
-        
-#         # Get dasha for current day
-#         current_jd = date_str_to_jd(target_date.strftime('%Y-%m-%d'))
-#         current_day_dashas = find_dasha_levels_at_date(dasha_data['mahadasha_periods'], current_jd)
-
-#         # Build previous_day dict
-#         previous_day = [
-#             ('date', previous_date.strftime('%Y-%m-%d')),
-#             ('dasha_sequence', previous_day_dashas['dasha_sequence'] if previous_day_dashas else None),
-#             ('levels', dict(previous_day_dashas['levels']) if previous_day_dashas else None)
-#         ]
-        
-#         # Build current_day dict
-#         current_day = [
-#             ('date', target_date.strftime('%Y-%m-%d')),
-#             ('dasha_sequence', current_day_dashas['dasha_sequence'] if current_day_dashas else None),
-#             ('levels', dict(current_day_dashas['levels']) if current_day_dashas else None)
-#         ]
-        
-#         # Build response in exact order
-#         response = [
-#             ('user_name', data.get('user_name', 'Unknown')),
-#             ('birth_date', birth_date),
-#             ('birth_time', birth_time),
-#             ('nakshatra_at_birth', dasha_data['nakshatra']),
-#             ('moon_longitude', dasha_data['moon_longitude']),
-#             ('previous_day', dict(previous_day)),
-#             ('current_day', dict(current_day))
-#         ]
-        
-#         return create_json_response(dict(response), 200)
-#     except Exception as e:
-#         return create_json_response({"error": str(e)}, 500)
-
-
-# @bp.route('/dasha_for_week', methods=['POST'])
-# def dasha_for_week():
-#     """API endpoint to get dasha sequence for current week (7 days)."""
-#     try:
-#         data = request.get_json()
-#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not data or not all(field in data for field in required_fields):
-#             return create_json_response({"error": "Missing required fields"}, 400)
-
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         tz_offset = float(data['timezone_offset'])
-        
-#         # Get target date (default to current date if not provided)
-#         target_date_str = data.get('target_date', datetime.now().strftime('%Y-%m-%d'))
-#         target_date = datetime.strptime(target_date_str, '%Y-%m-%d')
-
-#         # Get complete dasha calculation
-#         dasha_data = get_complete_vimshottari_dasha(birth_date, birth_time, tz_offset)
-        
-#         # Get dasha for each day of the week
-#         week_dashas = []
-#         for i in range(7):
-#             day_date = target_date + timedelta(days=i)
-#             day_jd = date_str_to_jd(day_date.strftime('%Y-%m-%d'))
-#             day_dasha_info = find_dasha_levels_at_date(dasha_data['mahadasha_periods'], day_jd)
-            
-#             day_data = [
-#                 ('date', day_date.strftime('%Y-%m-%d')),
-#                 ('day_name', day_date.strftime('%A')),
-#                 ('dasha_sequence', day_dasha_info['dasha_sequence'] if day_dasha_info else None),
-#                 ('levels', dict(day_dasha_info['levels']) if day_dasha_info else None)
-#             ]
-            
-#             week_dashas.append(dict(day_data))
-
-#         # Build response in exact order
-#         response = [
-#             ('user_name', data.get('user_name', 'Unknown')),
-#             ('birth_date', birth_date),
-#             ('birth_time', birth_time),
-#             ('nakshatra_at_birth', dasha_data['nakshatra']),
-#             ('moon_longitude', dasha_data['moon_longitude']),
-#             ('week_start_date', target_date.strftime('%Y-%m-%d')),
-#             ('week_end_date', (target_date + timedelta(days=6)).strftime('%Y-%m-%d')),
-#             ('total_days', 7),
-#             ('week_dashas', week_dashas)
-#         ]
-        
-#         return create_json_response(dict(response), 200)
-#     except Exception as e:
-#         return create_json_response({"error": str(e)}, 500)
-
-
-# @bp.route('/dasha_for_month', methods=['POST'])
-# def dasha_for_month():
-#     """API endpoint to get dasha sequence for current month (30 days)."""
-#     try:
-#         data = request.get_json()
-#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not data or not all(field in data for field in required_fields):
-#             return create_json_response({"error": "Missing required fields"}, 400)
-
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         tz_offset = float(data['timezone_offset'])
-        
-#         # Get target date (default to current date if not provided)
-#         target_date_str = data.get('target_date', datetime.now().strftime('%Y-%m-%d'))
-#         target_date = datetime.strptime(target_date_str, '%Y-%m-%d')
-
-#         # Get complete dasha calculation
-#         dasha_data = get_complete_vimshottari_dasha(birth_date, birth_time, tz_offset)
-        
-#         # Get dasha for each day of the month (30 days)
-#         month_dashas = []
-#         for i in range(30):
-#             day_date = target_date + timedelta(days=i)
-#             day_jd = date_str_to_jd(day_date.strftime('%Y-%m-%d'))
-#             day_dasha_info = find_dasha_levels_at_date(dasha_data['mahadasha_periods'], day_jd)
-            
-#             day_data = [
-#                 ('date', day_date.strftime('%Y-%m-%d')),
-#                 ('day_name', day_date.strftime('%A')),
-#                 ('dasha_sequence', day_dasha_info['dasha_sequence'] if day_dasha_info else None),
-#                 ('levels', dict(day_dasha_info['levels']) if day_dasha_info else None)
-#             ]
-            
-#             month_dashas.append(dict(day_data))
-
-#         # Build response in exact order
-#         response = [
-#             ('user_name', data.get('user_name', 'Unknown')),
-#             ('birth_date', birth_date),
-#             ('birth_time', birth_time),
-#             ('nakshatra_at_birth', dasha_data['nakshatra']),
-#             ('moon_longitude', dasha_data['moon_longitude']),
-#             ('month_start_date', target_date.strftime('%Y-%m-%d')),
-#             ('month_end_date', (target_date + timedelta(days=29)).strftime('%Y-%m-%d')),
-#             ('total_days', 30),
-#             ('month_dashas', month_dashas)
-#         ]
-        
-#         return create_json_response(dict(response), 200)
-#     except Exception as e:
-#         return create_json_response({"error": str(e)}, 500)
 
 
 def create_json_response(data, status_code=200):
