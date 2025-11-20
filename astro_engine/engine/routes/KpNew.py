@@ -4,6 +4,8 @@ from datetime import datetime
 import logging
 from venv import logger
 
+from astro_engine.engine.kpSystem.charts.Fortuna import calculate_part_of_fortune
+
 from ..ashatakavargha.KpShodashVargha import CHARTS_kp, SIGNS_kp, get_sidereal_asc_kp, get_sidereal_positions_kp, julian_day_kp, local_to_utc_kp, varga_sign_kp
 from ..dashas.KpAntar import calculate_maha_antar_dasha
 from ..dashas.KpPran import calculate_maha_antar_pratyantar_pran_dasha
@@ -197,6 +199,34 @@ def calculate_significations():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
     
+
+
+#  Forutna API
+
+@kp.route('/kp/fortuna', methods=['POST'])
+def fortuna():
+    try:
+        data = request.get_json()
+        user_name = data["user_name"]
+        birth_date = data["birth_date"]
+        birth_time = data["birth_time"]
+        latitude = float(data["latitude"])
+        longitude = float(data["longitude"])
+        tz_offset = float(data["timezone_offset"])
+
+        # Calculate Part of Fortune
+        result = calculate_part_of_fortune(
+            birth_date, 
+            birth_time, 
+            latitude, 
+            longitude, 
+            tz_offset, 
+            user_name
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 
