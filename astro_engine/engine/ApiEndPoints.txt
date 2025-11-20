@@ -147,7 +147,8 @@ http://localhost:5000/choghadiya_times
 http://localhost:5000/hora_times
 http://localhost:5000/lagna_times
 http://localhost:5000/muhurat
-http://localhost:5000//panchanga/month
+http://localhost:5000/panchanga/month
+http://localhost:5000/lahiri/guna-milan
 
 
 

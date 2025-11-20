@@ -19,6 +19,7 @@ from astro_engine.engine.natalCharts.PanchagaMonth import calculate_days_panchan
 from astro_engine.engine.natalCharts.Panchanga import calculate_choghadiya, calculate_exact_moon_times, calculate_exact_murtha_corrected, calculate_exact_sun_times, calculate_hora, calculate_lagna_timings_vedic, calculate_panchanga_elements, get_current_choghadiya, get_current_hora, get_current_lagna_timing
 from astro_engine.engine.natalCharts.PanchangaOne import calculate_exact_moon_times_one, calculate_exact_sun_times_one, calculate_panchanga_elements_one
 from astro_engine.engine.numerology.PersonNumrology import analyze_prime_significance, calculate_chara_karakas, calculate_destiny_number, calculate_name_number, calculate_number_compatibility, calculate_personality_number, calculate_soul_urge_number, calculate_sun_sign, get_compatibility_matrix, get_natural_karaka_planets, get_ruling_planet_info
+from astro_engine.engine.others.GunaMilan import GunaMilanCalculator, calculate_birth_details
 from astro_engine.engine.remedies.LalkitabRemedies import lal_kitab_calculate_chart, lal_kitab_get_all_chart_remedies, lal_kitab_get_remedies_for_planet_house
 from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MINIMUM_SHADBALA, SIGN_LORDS, gemstone_calculate_ascendant, gemstone_calculate_houses_whole_sign, gemstone_calculate_planetary_positions, gemstone_calculate_shadbala_simplified, gemstone_calculate_vimshottari_dasha, gemstone_classify_functional_nature, gemstone_get_current_dasha, gemstone_get_julian_day, gemstone_get_planet_house, gemstone_get_positional_strength, gemstone_get_ruled_houses, gemstone_recommend_gemstones_enhanced
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
@@ -5232,5 +5233,68 @@ def get_days_panchanga():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+
+#  Guna-milan calculations
+
+@bp.route('/lahiri/guna-milan', methods=['POST'])
+def guna_milan():
+    """
+    Calculate Guna Milan (Ashtakoot) compatibility
+    
+    Input format:
+    {
+        "male": {
+            "user_name": "Name",
+            "birth_date": "YYYY-MM-DD",
+            "birth_time": "HH:MM:SS",
+            "latitude": "17.3850",
+            "longitude": "78.4867",
+            "timezone_offset": 5.5
+        },
+        "female": {
+            "user_name": "Name",
+            "birth_date": "YYYY-MM-DD",
+            "birth_time": "HH:MM:SS",
+            "latitude": "17.3850",
+            "longitude": "78.4867",
+            "timezone_offset": 5.5
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or 'male' not in data or 'female' not in data:
+            return jsonify({'error': 'Male and female birth data required'}), 400
+        
+        # Calculate complete birth details for both (including Ascendant)
+        male_details = calculate_birth_details(data['male'])
+        female_details = calculate_birth_details(data['female'])
+        
+        # Extract Moon details for Guna Milan calculation
+        male_moon = male_details['moon']
+        female_moon = female_details['moon']
+        
+        # Calculate Guna Milan using MOON details only
+        calculator = GunaMilanCalculator(male_moon, female_moon)
+        results = calculator.calculate_all_kutas()
+        
+        # Build response
+        response = {
+            'male': {
+                'name': data['male'].get('user_name', 'Male'),
+                'birth_details': male_details
+            },
+            'female': {
+                'name': data['female'].get('user_name', 'Female'),
+                'birth_details': female_details
+            },
+            'guna_milan_results': results
+        }
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
