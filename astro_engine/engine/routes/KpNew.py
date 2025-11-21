@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 from venv import logger
 
+from astro_engine.engine.kpSystem.charts.CharDasha import calculate_complete_chara_dasha
 from astro_engine.engine.kpSystem.charts.Fortuna import calculate_part_of_fortune
 
 from ..ashatakavargha.KpShodashVargha import CHARTS_kp, SIGNS_kp, get_sidereal_asc_kp, get_sidereal_positions_kp, julian_day_kp, local_to_utc_kp, varga_sign_kp
@@ -297,6 +298,45 @@ def calculate_maha_antar_pratyantar_dasha_pran():
 
 
 
+
+
+#  Char Dasha :
+
+@kp.route('/kp/chara-dasha', methods=['POST'])
+def chara_dasha_api():
+    """Main API endpoint for Chara Dasha calculation"""
+    try:
+        data = request.get_json()
+        
+        user_name = data.get('user_name', 'Unknown')
+        birth_date = data.get('birth_date')
+        birth_time = data.get('birth_time')
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        timezone_offset = float(data.get('timezone_offset'))
+        
+        if not all([birth_date, birth_time]):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        # Calculate complete Chara Dasha
+        response = calculate_complete_chara_dasha(
+            birth_date,
+            birth_time,
+            latitude,
+            longitude,
+            timezone_offset,
+            user_name
+        )
+        
+        response["status"] = "success"
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 
 

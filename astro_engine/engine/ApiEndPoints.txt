@@ -167,6 +167,7 @@ http://localhost:5000/kp/calculate_maha_antar_dasha
 http://localhost:5000/kp/calculate_maha_antar_pratyantar_dasha
 http://localhost:5000/kp/calculate_maha_antar_pratyantar_sooksha_dasha
 http://localhost:5000/kp/calculate_maha_antar_pratyantar_pran_dasha
+http://localhost:5000//kp/chara-dasha
 
 
 http://localhost:5000/kp/shodasha_varga_signs
