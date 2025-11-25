@@ -2649,6 +2649,63 @@ def calculate_lahiri_binnashtakvarga():
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
+# #  Sarvathakavargha 
+# @bp.route('/lahiri/calculate_sarvashtakavarga', methods=['POST'])
+# def calculate_sarvashtakavarga_endpoint():
+#     """API endpoint to calculate Sarvashtakvarga with matrix table based on birth details."""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"error": "No JSON data provided"}), 400
+
+#         required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+#         if not all(key in data for key in required):
+#             return jsonify({"error": "Missing required parameters"}), 400
+
+#         user_name = data['user_name']
+#         birth_date = data['birth_date']
+#         birth_time = data['birth_time']
+#         latitude = float(data['latitude'])
+#         longitude = float(data['longitude'])
+#         tz_offset = float(data['timezone_offset'])
+
+#         if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+#             return jsonify({"error": "Invalid latitude or longitude"}), 400
+
+#         # Call the calculation function
+#         results = lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offset)
+
+#         # Construct JSON response
+#         response = {
+#             "user_name": user_name,
+#             "birth_details": {
+#                 "birth_date": birth_date,
+#                 "birth_time": birth_time,
+#                 "latitude": latitude,
+#                 "longitude": longitude,
+#                 "timezone_offset": tz_offset
+#             },
+#             "planetary_positions": results["planetary_positions"],
+#             "ascendant": results["ascendant"],
+#             "bhinnashtakavarga": results["bhinnashtakavarga"],
+#             "sarvashtakavarga": results["sarvashtakavarga"],
+#             "notes": {
+#                 "ayanamsa": "Lahiri",
+#                 "ayanamsa_value": f"{results['ayanamsa']:.6f}",
+#                 "chart_type": "Rasi",
+#                 "house_system": "Whole Sign"
+#             },
+#             "debug": {
+#                 "julian_day": results["julian_day"],
+#                 "ayanamsa": f"{results['ayanamsa']:.6f}"
+#             }
+#         }
+#         return jsonify(response), 200
+
+#     except Exception as e:
+#         logging.error(f"Error: {str(e)}")
+#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 #  Sarvathakavargha 
 @bp.route('/lahiri/calculate_sarvashtakavarga', methods=['POST'])
 def calculate_sarvashtakavarga_endpoint():
@@ -2688,7 +2745,16 @@ def calculate_sarvashtakavarga_endpoint():
             "planetary_positions": results["planetary_positions"],
             "ascendant": results["ascendant"],
             "bhinnashtakavarga": results["bhinnashtakavarga"],
+            "bhinnashtakavarga_totals": results["bhinnashtakavarga_totals"],  # NEW
             "sarvashtakavarga": results["sarvashtakavarga"],
+            "summary": {  # NEW: Summary section with totals
+                "total_sarvashtakavarga_bindus": results["sarvashtakavarga"]["total_bindus"],
+                "bhinnashtakavarga_totals": results["bhinnashtakavarga_totals"],
+                "interpretation": {
+                    "sarvashtakavarga_total": "Total of 337 bindus is the theoretical maximum",
+                    "house_strength": "Houses with 28+ bindus are strong, <25 are weak"
+                }
+            },
             "notes": {
                 "ayanamsa": "Lahiri",
                 "ayanamsa_value": f"{results['ayanamsa']:.6f}",
@@ -2705,8 +2771,6 @@ def calculate_sarvashtakavarga_endpoint():
     except Exception as e:
         logging.error(f"Error: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
-
 
 
 #  Shodamsha Vargha sumary Sings.
