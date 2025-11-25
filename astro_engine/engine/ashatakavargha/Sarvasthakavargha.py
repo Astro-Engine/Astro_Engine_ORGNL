@@ -202,6 +202,71 @@ def generate_matrix_table(sarvashtakavarga, asc_sign_idx):
         })
     return matrix
 
+# def lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offset):
+#     """Calculate Sarvashtakavarga using Lahiri Ayanamsa based on birth details."""
+#     # Calculate Julian Day and Ayanamsa
+#     jd = get_julian_day(birth_date, birth_time, tz_offset)
+#     ayanamsa = calculate_ayanamsa(jd)
+
+#     # Calculate planetary positions and Ascendant
+#     positions = {}
+#     planet_positions = {}
+#     for planet in PLANETS:
+#         lon = calculate_sidereal_longitude(jd, PLANETS[planet])
+#         sign_idx = get_sign_index(lon)
+#         positions[planet] = {
+#             "longitude": lon,
+#             "sign_index": sign_idx
+#         }
+#         sign_deg = lon % 30
+#         planet_positions[planet] = {
+#             "sign": SIGNS[sign_idx],
+#             "degrees": format_dms(sign_deg)
+#         }
+
+#     asc_lon = calculate_ascendant(jd, latitude, longitude)
+#     asc_sign_idx = get_sign_index(asc_lon)
+#     positions["Ascendant"] = {
+#         "longitude": asc_lon,
+#         "sign_index": asc_sign_idx
+#     }
+#     asc_deg = asc_lon % 30
+
+#     # Calculate Bhinnashtakavarga for each planet
+#     bhinnashtakavarga = calculate_bhinnashtakavarga_matrix(positions)
+
+#     # Format Bhinnashtakavarga for response (signs mapped to bindus)
+#     bhinnashtakavarga_formatted = {
+#         planet: {SIGNS[i]: bindus[i] for i in range(12)}
+#         for planet, bindus in bhinnashtakavarga.items()
+#     }
+
+#     # Calculate Sarvashtakvarga
+#     sarvashtakavarga = calculate_sarvashtakavarga(bhinnashtakavarga)
+
+#     # Map Sarvashtakvarga to houses
+#     houses = map_to_houses(sarvashtakavarga, asc_sign_idx)
+
+#     # Generate matrix table for Sarvashtakvarga
+#     matrix_table = generate_matrix_table(sarvashtakavarga, asc_sign_idx)
+
+#     # Return all calculated data
+#     return {
+#         "planetary_positions": planet_positions,
+#         "ascendant": {"sign": SIGNS[asc_sign_idx], "degrees": format_dms(asc_deg)},
+#         "bhinnashtakavarga": bhinnashtakavarga_formatted,
+#         "sarvashtakavarga": {
+#             "signs": {SIGNS[i]: sarvashtakavarga[i] for i in range(12)},
+#             "houses": houses,
+#             "matrix_table": matrix_table
+#         },
+#         "julian_day": jd,
+#         "ayanamsa": ayanamsa
+#     }
+
+
+
+
 def lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offset):
     """Calculate Sarvashtakavarga using Lahiri Ayanamsa based on birth details."""
     # Calculate Julian Day and Ayanamsa
@@ -235,6 +300,11 @@ def lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offs
     # Calculate Bhinnashtakavarga for each planet
     bhinnashtakavarga = calculate_bhinnashtakavarga_matrix(positions)
 
+    # Calculate total bindus for each planet in Bhinnashtakavarga
+    bhinnashtakavarga_totals = {
+        planet: sum(bindus) for planet, bindus in bhinnashtakavarga.items()
+    }
+
     # Format Bhinnashtakavarga for response (signs mapped to bindus)
     bhinnashtakavarga_formatted = {
         planet: {SIGNS[i]: bindus[i] for i in range(12)}
@@ -243,6 +313,9 @@ def lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offs
 
     # Calculate Sarvashtakvarga
     sarvashtakavarga = calculate_sarvashtakavarga(bhinnashtakavarga)
+
+    # Calculate total bindus for Sarvashtakavarga
+    sarvashtakavarga_total = sum(sarvashtakavarga)
 
     # Map Sarvashtakvarga to houses
     houses = map_to_houses(sarvashtakavarga, asc_sign_idx)
@@ -255,11 +328,14 @@ def lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offs
         "planetary_positions": planet_positions,
         "ascendant": {"sign": SIGNS[asc_sign_idx], "degrees": format_dms(asc_deg)},
         "bhinnashtakavarga": bhinnashtakavarga_formatted,
+        "bhinnashtakavarga_totals": bhinnashtakavarga_totals,  # NEW: Total bindus per planet
         "sarvashtakavarga": {
             "signs": {SIGNS[i]: sarvashtakavarga[i] for i in range(12)},
             "houses": houses,
-            "matrix_table": matrix_table
+            "matrix_table": matrix_table,
+            "total_bindus": sarvashtakavarga_total  # NEW: Total Sarvashtakavarga bindus
         },
         "julian_day": jd,
         "ayanamsa": ayanamsa
     }
+
