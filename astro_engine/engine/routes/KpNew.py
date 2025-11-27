@@ -6,6 +6,8 @@ from venv import logger
 
 from astro_engine.engine.kpSystem.charts.CharDasha import calculate_complete_chara_dasha
 from astro_engine.engine.kpSystem.charts.Fortuna import calculate_part_of_fortune
+from astro_engine.engine.kpSystem.charts.FourStepSignificator import calculate_kp_four_step_significators
+from astro_engine.engine.kpSystem.charts.PlanetSignifications import calculate_kp_significators
 
 from ..ashatakavargha.KpShodashVargha import CHARTS_kp, SIGNS_kp, get_sidereal_asc_kp, get_sidereal_positions_kp, julian_day_kp, local_to_utc_kp, varga_sign_kp
 from ..dashas.KpAntar import calculate_maha_antar_dasha
@@ -15,7 +17,7 @@ from ..dashas.KpSookshma import calculate_maha_antar_pratyantar_sooksha_dashas
 from ..kpSystem.KpHorary import KP_NEW_AYANAMSA, calc_vimshottari_dasha_path, check_radicality, check_void_of_course_moon, get_asc_from_horary_num, get_nakshatra_chain, get_ruling_planets, get_sign_lord, get_significators_expanded, house_cusps, julday_from_date_time, kp_timing_by_dasha_layers, planet_chain, planet_house_assignment, sign_deg, sub_lord_chain_judgment
 from ..kpSystem.charts.BhavaHouses import calculate_bhava_houses_details
 from ..kpSystem.charts.CupsalChart import ZODIAC_SIGNS, cupsal_assign_nakshatra_and_lords, cupsal_assign_planet_to_house, cupsal_calculate_ascendant_and_cusps, cupsal_calculate_kp_new_ayanamsa, cupsal_calculate_planet_positions, cupsal_calculate_significators, cupsal_format_dms, cupsal_get_julian_day
-from ..kpSystem.charts.RulingPlanets import ruling_calculate_ascendant_and_cusps, ruling_calculate_balance_of_dasha, ruling_calculate_fortuna, ruling_calculate_jd, ruling_calculate_planet_positions, ruling_check_rahu_ketu, ruling_compile_core_rp, ruling_get_day_lord, ruling_get_details
+from ..kpSystem.charts.RulingPlanets import calculate_ruling_planets
 from ..kpSystem.charts.SignificatorHouse import calculate_planets_significations
 
 
@@ -26,7 +28,7 @@ kp = Blueprint('kp_routes', __name__)
 
 
 # KP Planets and Cusps
-@kp.route('/kp/calculate_kp_planets_cusps', methods=['POST'])
+@kp.route('/kp/cusps_chart', methods=['POST'])
 def calculate_kp_planets_cusps():
     try:
         data = request.get_json()
@@ -92,48 +94,76 @@ def calculate_kp_planets_cusps():
 
 
 # Ruling Planets
-@kp.route('/kp/calculate_ruling_planets', methods=['POST'])
-def calculate_ruling_planets():
+# @kp.route('/kp/calculate_ruling_planets', methods=['POST'])
+# def calculate_ruling_planets():
+#     try:
+#         data = request.get_json()
+#         birth_date = data['birth_date']
+#         birth_time = data['birth_time']
+#         latitude = float(data['latitude'])
+#         longitude = float(data['longitude'])
+#         timezone_offset = float(data['timezone_offset'])
+
+#         jd, utc_dt = ruling_calculate_jd(birth_date, birth_time, timezone_offset)
+#         ascendant, cusps = ruling_calculate_ascendant_and_cusps(jd, latitude, longitude)
+#         sun_pos, moon_pos, rahu_pos, ketu_pos = ruling_calculate_planet_positions(jd)
+#         day_lord = ruling_get_day_lord(utc_dt)
+#         lagna_sign, lagna_rashi_lord, lagna_nakshatra, lagna_star_lord, lagna_sub_lord = ruling_get_details(ascendant)
+#         moon_sign, moon_rashi_lord, moon_nakshatra, moon_star_lord, moon_sub_lord = ruling_get_details(moon_pos)
+#         lagna_details = {'rashi_lord': lagna_rashi_lord, 'star_lord': lagna_star_lord, 'sub_lord': lagna_sub_lord}
+#         moon_details = {'rashi_lord': moon_rashi_lord, 'star_lord': moon_star_lord, 'sub_lord': moon_sub_lord}
+#         core_rp = ruling_compile_core_rp(lagna_details, moon_details, day_lord)
+#         core_rp = ruling_check_rahu_ketu(rahu_pos, ketu_pos, core_rp)
+#         fortuna = ruling_calculate_fortuna(ascendant, moon_pos, sun_pos)
+#         dasha_lord, balance_years = ruling_calculate_balance_of_dasha(moon_pos, moon_star_lord)
+
+#         response = {
+#             "ruling_planets": list(core_rp),
+#             "details": {
+#                 "day_lord": day_lord,
+#                 "lagna_lord": lagna_rashi_lord,
+#                 "lagna_nakshatra_lord": lagna_star_lord,
+#                 "lagna_sub_lord": lagna_sub_lord,
+#                 "moon_rashi_lord": moon_rashi_lord,
+#                 "moon_nakshatra_lord": moon_star_lord,
+#                 "moon_sub_lord": moon_sub_lord,
+#                 "fortuna": round(fortuna, 4),
+#                 "balance_of_dasha": {"dasha_lord": dasha_lord, "balance_years": round(balance_years, 4)}
+#             }
+#         }
+#         return jsonify(response), 200
+
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 400
+
+
+@kp.route('/kp/ruling-planets', methods=['POST'])
+def ruling_planets():
+    """API endpoint for calculating Ruling Planets"""
     try:
         data = request.get_json()
-        birth_date = data['birth_date']
-        birth_time = data['birth_time']
-        latitude = float(data['latitude'])
-        longitude = float(data['longitude'])
-        timezone_offset = float(data['timezone_offset'])
-
-        jd, utc_dt = ruling_calculate_jd(birth_date, birth_time, timezone_offset)
-        ascendant, cusps = ruling_calculate_ascendant_and_cusps(jd, latitude, longitude)
-        sun_pos, moon_pos, rahu_pos, ketu_pos = ruling_calculate_planet_positions(jd)
-        day_lord = ruling_get_day_lord(utc_dt)
-        lagna_sign, lagna_rashi_lord, lagna_nakshatra, lagna_star_lord, lagna_sub_lord = ruling_get_details(ascendant)
-        moon_sign, moon_rashi_lord, moon_nakshatra, moon_star_lord, moon_sub_lord = ruling_get_details(moon_pos)
-        lagna_details = {'rashi_lord': lagna_rashi_lord, 'star_lord': lagna_star_lord, 'sub_lord': lagna_sub_lord}
-        moon_details = {'rashi_lord': moon_rashi_lord, 'star_lord': moon_star_lord, 'sub_lord': moon_sub_lord}
-        core_rp = ruling_compile_core_rp(lagna_details, moon_details, day_lord)
-        core_rp = ruling_check_rahu_ketu(rahu_pos, ketu_pos, core_rp)
-        fortuna = ruling_calculate_fortuna(ascendant, moon_pos, sun_pos)
-        dasha_lord, balance_years = ruling_calculate_balance_of_dasha(moon_pos, moon_star_lord)
-
-        response = {
-            "ruling_planets": list(core_rp),
-            "details": {
-                "day_lord": day_lord,
-                "lagna_lord": lagna_rashi_lord,
-                "lagna_nakshatra_lord": lagna_star_lord,
-                "lagna_sub_lord": lagna_sub_lord,
-                "moon_rashi_lord": moon_rashi_lord,
-                "moon_nakshatra_lord": moon_star_lord,
-                "moon_sub_lord": moon_sub_lord,
-                "fortuna": round(fortuna, 4),
-                "balance_of_dasha": {"dasha_lord": dasha_lord, "balance_years": round(balance_years, 4)}
-            }
-        }
-        return jsonify(response), 200
-
+        
+        # Validate required fields
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+        
+        result = calculate_ruling_planets(data)
+        
+        if result['status'] == 'error':
+            return jsonify(result), 400
+        
+        return jsonify(result), 200
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 
 
@@ -200,6 +230,90 @@ def calculate_significations():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
     
+
+
+#  Planets Significations
+
+@kp.route('/kp/planets-significators', methods=['POST'])
+def kp_significators():
+    """API endpoint for calculating KP Significators"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        date_str = data.get('birth_date')
+        time_str = data.get('birth_time')
+        lat_value = data.get('latitude')
+        lon_value = data.get('longitude')
+        
+        if not date_str:
+            return jsonify({"error": "Missing required field: birth_date"}), 400
+        if not time_str:
+            return jsonify({"error": "Missing required field: birth_time"}), 400
+        if lat_value is None:
+            return jsonify({"error": "Missing required field: latitude"}), 400
+        if lon_value is None:
+            return jsonify({"error": "Missing required field: longitude"}), 400
+        
+        # Calculate KP Significators
+        response = calculate_kp_significators(data)
+        
+        return jsonify(response)
+    
+    except ValueError as e:
+        return jsonify({"error": f"Invalid value: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+#  Cuspal Interlinks in kp 
+
+@kp.route('/kp/calculate_kp_significators', methods=['POST'])
+def calculate_kp_significators():
+    """
+    Calculate Complete KP Significators with Mean Node
+    
+    Input JSON:
+    {
+        "user_name": "Praveen",
+        "birth_date": "1998-10-15",
+        "birth_time": "10:40:30",
+        "latitude": "17.3850",
+        "longitude": "78.4867",
+        "timezone_offset": 5.5
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        missing_fields = [field for field in required_fields if field not in data]
+        
+        if missing_fields:
+            return jsonify({
+                'error': f'Missing required fields: {", ".join(missing_fields)}'
+            }), 400
+        
+        # Calculate using the imported function
+        response = calculate_kp_four_step_significators(data)
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({
+            'success': False,
+            'error': f'Invalid input: {str(ve)}'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Calculation error: {str(e)}'
+        }), 500
+
 
 
 #  Forutna API
