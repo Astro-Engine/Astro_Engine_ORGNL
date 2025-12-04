@@ -1,12 +1,16 @@
 
+import traceback
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
 from venv import logger
 
 from astro_engine.engine.kpSystem.charts.CharDasha import calculate_complete_chara_dasha
+from astro_engine.engine.kpSystem.charts.CuspalInterLinkSL import calculate_kp_cuspal_interlink_Sub
+from astro_engine.engine.kpSystem.charts.CuspalInterlinkSSL import calculate_kp_cuspal_interlink_advanced, calculate_kp_cuspal_interlink_basic
 from astro_engine.engine.kpSystem.charts.Fortuna import calculate_part_of_fortune
 from astro_engine.engine.kpSystem.charts.FourStepSignificator import calculate_kp_four_step_significators
+from astro_engine.engine.kpSystem.charts.NakstraNadi import calculate_kp_chart
 from astro_engine.engine.kpSystem.charts.PlanetSignifications import calculate_kp_significators
 
 from ..ashatakavargha.KpShodashVargha import CHARTS_kp, SIGNS_kp, get_sidereal_asc_kp, get_sidereal_positions_kp, julian_day_kp, local_to_utc_kp, varga_sign_kp
@@ -92,50 +96,7 @@ def calculate_kp_planets_cusps():
 
 
 
-
 # Ruling Planets
-# @kp.route('/kp/calculate_ruling_planets', methods=['POST'])
-# def calculate_ruling_planets():
-#     try:
-#         data = request.get_json()
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         latitude = float(data['latitude'])
-#         longitude = float(data['longitude'])
-#         timezone_offset = float(data['timezone_offset'])
-
-#         jd, utc_dt = ruling_calculate_jd(birth_date, birth_time, timezone_offset)
-#         ascendant, cusps = ruling_calculate_ascendant_and_cusps(jd, latitude, longitude)
-#         sun_pos, moon_pos, rahu_pos, ketu_pos = ruling_calculate_planet_positions(jd)
-#         day_lord = ruling_get_day_lord(utc_dt)
-#         lagna_sign, lagna_rashi_lord, lagna_nakshatra, lagna_star_lord, lagna_sub_lord = ruling_get_details(ascendant)
-#         moon_sign, moon_rashi_lord, moon_nakshatra, moon_star_lord, moon_sub_lord = ruling_get_details(moon_pos)
-#         lagna_details = {'rashi_lord': lagna_rashi_lord, 'star_lord': lagna_star_lord, 'sub_lord': lagna_sub_lord}
-#         moon_details = {'rashi_lord': moon_rashi_lord, 'star_lord': moon_star_lord, 'sub_lord': moon_sub_lord}
-#         core_rp = ruling_compile_core_rp(lagna_details, moon_details, day_lord)
-#         core_rp = ruling_check_rahu_ketu(rahu_pos, ketu_pos, core_rp)
-#         fortuna = ruling_calculate_fortuna(ascendant, moon_pos, sun_pos)
-#         dasha_lord, balance_years = ruling_calculate_balance_of_dasha(moon_pos, moon_star_lord)
-
-#         response = {
-#             "ruling_planets": list(core_rp),
-#             "details": {
-#                 "day_lord": day_lord,
-#                 "lagna_lord": lagna_rashi_lord,
-#                 "lagna_nakshatra_lord": lagna_star_lord,
-#                 "lagna_sub_lord": lagna_sub_lord,
-#                 "moon_rashi_lord": moon_rashi_lord,
-#                 "moon_nakshatra_lord": moon_star_lord,
-#                 "moon_sub_lord": moon_sub_lord,
-#                 "fortuna": round(fortuna, 4),
-#                 "balance_of_dasha": {"dasha_lord": dasha_lord, "balance_years": round(balance_years, 4)}
-#             }
-#         }
-#         return jsonify(response), 200
-
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 400
-
 
 @kp.route('/kp/ruling-planets', methods=['POST'])
 def ruling_planets():
@@ -315,9 +276,135 @@ def calculate_kp_significators():
         }), 500
 
 
+#  Cuspal Interlinks in kp Sub-Sub Loard:
+
+@kp.route('/kp/cuspal_interlink_advanced_ssl', methods=['POST'])
+def api_calculate_kp_cuspal_interlink_advanced():
+    """Advanced KP Cuspal Interlink Calculator"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({"status": "error", "message": "No input data provided"}), 400
+        
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+        
+        # Calculate using the imported function
+        response = calculate_kp_cuspal_interlink_advanced(data)
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({
+            "status": "error",
+            "message": str(ve)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+@kp.route('/kp/calculate_kp_cuspal_interlink', methods=['POST'])
+def api_calculate_kp_cuspal_interlink():
+    """Basic KP Cuspal Interlink endpoint (original functionality)"""
+    try:
+        data = request.json
+        
+        if not data:
+            return jsonify({"status": "error", "message": "No input data provided"}), 400
+        
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+        
+        # Calculate using the imported function
+        response = calculate_kp_cuspal_interlink_basic(data)
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({"status": "error", "message": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e), "traceback": traceback.format_exc()}), 500
+
+
+#  Cuspal Interlinks in kp Sub Loard:
+
+@kp.route('/kp/cuspal_interl_SL', methods=['POST'])
+def api_calculate_kp_cuspal_sub_lord():
+    """Main endpoint for KP Cuspal Interlink calculations"""
+    try:
+        data = request.json
+        
+        # Validate input
+        if not data:
+            return jsonify({"status": "error", "message": "No input data provided"}), 400
+        
+        # Extract input data with validation
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+        
+        # Calculate using the imported function
+        response = calculate_kp_cuspal_interlink_Sub(data)
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({
+            "status": "error",
+            "message": str(ve)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+
+#  Nakshatra Nadi in KP
+
+@kp.route('/kp/nakshatra_nadi', methods=['POST'])
+def api_calculate_kp():
+    """Main KP calculation endpoint with ayanamsa selection"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Missing required field: {field}"
+                }), 400
+        
+        # Calculate using the imported function
+        response = calculate_kp_chart(data)
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+
 
 #  Forutna API
-
 @kp.route('/kp/fortuna', methods=['POST'])
 def fortuna():
     try:
