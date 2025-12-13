@@ -1,20 +1,22 @@
 #
 # DigitalOcean App Platform Specification for Astro Engine
-# Production-ready configuration with auto-scaling and managed Redis
+# Production-ready configuration
 #
 # Deploy with: doctl apps create --spec .do/app.yaml
 # Update with: doctl apps update <app-id> --spec .do/app.yaml
 #
+# NOTE: Secrets are configured via DigitalOcean Console/CLI, not in this file
+#
 
 name: astro-engine
-region: blr  # Bangalore, India (closest to your target users)
+region: blr  # Bangalore, India
 
 # Main API Service
 services:
   - name: api
     # GitHub integration for auto-deploy
     github:
-      repo: Project-Corp-Astro/Astro_Engine
+      repo: Astro-Engine/Astro_Engine_ORGNL
       branch: main
       deploy_on_push: true
 
@@ -25,7 +27,6 @@ services:
     http_port: 5000
 
     # Instance sizing - Basic XXS (512MB RAM, shared CPU, $5/month)
-    # Can upgrade to professional-xs (1GB, $12/mo) or higher after testing
     instance_size_slug: basic-xxs
     instance_count: 1
 
@@ -38,7 +39,7 @@ services:
       success_threshold: 1
       failure_threshold: 3
 
-    # Environment variables
+    # Environment variables (non-secrets only)
     envs:
       # Flask configuration
       - key: FLASK_ENV
@@ -59,6 +60,9 @@ services:
       - key: TIMEOUT
         value: "120"
 
+      - key: ENVIRONMENT
+        value: "production"
+
       # Application paths
       - key: PYTHONPATH
         value: "/app"
@@ -69,26 +73,80 @@ services:
       - key: EPHEMERIS_CACHE_SIZE
         value: "1000"
 
+      # Database Configuration (non-secret parts)
+      - key: DB_NAME
+        value: "postgres"
+
+      - key: DB_HOST
+        value: "aws-0-ap-southeast-1.pooler.supabase.com"
+
+      - key: DB_PORT
+        value: "5432"
+
+      # Cache TTLs
+      - key: CACHE_TTL_NATAL
+        value: "86400"
+
+      - key: CACHE_TTL_TRANSIT
+        value: "3600"
+
+      # OpenAI Configuration (non-secret)
+      - key: OPENAI_ASSISTANT_ID
+        value: "asst_TX9m2nAuLnMsoBMHfRAKPpsF"
+
+      - key: OPENAI_MODEL
+        value: "gpt-4o-mini"
+
+      # OTP Configuration (non-secret)
+      - key: CLIENT_ID_OTP
+        value: "M05P9FTUCRKI182E3E9KIQ7DZM80VLH4"
+
+      - key: APP_ID_OTP
+        value: "FQ2OHRM7YGB1GE6K7U3L"
+
+      # JWT Configuration (non-secret)
+      - key: JWT_ALGORITHM
+        value: "HS256"
+
+      - key: JWT_ISSUER
+        value: "ratan-astro-platform"
+
+      - key: JWT_EXPIRATION_HOURS
+        value: "24"
+
+      # WebSocket Configuration
+      - key: WEBSOCKET_AUTH_ENABLED
+        value: "true"
+
+      - key: WEBSOCKET_JWT_REQUIRED
+        value: "true"
+
+      - key: WEBSOCKET_AUTH_ROLLOUT_PERCENTAGE
+        value: "100"
+
+      # Security Settings (non-secret)
+      - key: API_KEY_REQUIRED
+        value: "false"
+
       # CORS configuration
       - key: CORS_ORIGINS
-        value: "*"  # Update with your actual frontend domains in production
+        value: "*"
 
-      # Rate Limiting (Phase 1, Module 1.4)
-      # Per-service rate limits
+      # Rate Limiting (internal services - high limits)
       - key: RATE_LIMIT_CORP_BACKEND
-        value: "5000 per hour"
+        value: "1000000 per hour"
 
       - key: RATE_LIMIT_ASTRO_RATAN
-        value: "2000 per hour"
+        value: "1000000 per hour"
 
       - key: RATE_LIMIT_REPORT_ENGINE
-        value: "1000 per hour"
+        value: "1000000 per hour"
 
       - key: RATE_LIMIT_TESTING
-        value: "100 per hour"
+        value: "1000000 per hour"
 
       - key: RATE_LIMIT_DEFAULT
-        value: "100 per hour"
+        value: "1000000 per hour"
 
       # Logging configuration
       - key: LOG_LEVEL
@@ -98,7 +156,7 @@ services:
         value: "/app/logs/astro_engine.log"
 
       - key: LOG_MAX_BYTES
-        value: "104857600"  # 100MB
+        value: "104857600"
 
       - key: LOG_BACKUP_COUNT
         value: "5"
@@ -110,58 +168,23 @@ services:
       - key: HEALTH_CHECK_ENABLED
         value: "true"
 
-      # Cache configuration (will be set after Redis creation)
+      # Cache configuration
       - key: CACHE_ENABLED
         value: "true"
 
       - key: CACHE_DEFAULT_TIMEOUT
-        value: "86400"  # 24 hours for natal charts
+        value: "3600"
 
-      # Redis URL (will be automatically set by DigitalOcean when database is attached)
-      - key: REDIS_URL
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-        value: "${redis-cache.REDIS_URL}"  # Auto-populated from database
-
-      # Secret key (IMPORTANT: Change this to a random value)
-      - key: SECRET_KEY
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-        value: "CHANGE_THIS_TO_RANDOM_SECRET_KEY_64_CHARACTERS_MINIMUM_VALUE"
-
-      # API Key Authentication (Phase 1, Module 1.3)
-      # Enable/disable authentication enforcement
+      # API Key Authentication
       - key: AUTH_REQUIRED
-        value: "false"  # Set to "true" after distributing keys to all services
+        value: "true"
 
-      # Valid API Keys (CRITICAL: Set this as a SECRET in DigitalOcean)
-      # Generate keys with: python3 -c "from astro_engine.auth_manager import generate_api_key; print(generate_api_key('service_name'))"
-      - key: VALID_API_KEYS
-        scope: RUN_AND_BUILD_TIME
-        type: SECRET
-        value: "REPLACE_WITH_COMMA_SEPARATED_API_KEYS"
-
-      # Routes exempt from authentication
       - key: AUTH_EXEMPT_ROUTES
-        value: "/health,/metrics"
+        value: "/health,/metrics,/auth/health,/auth/stats,/auth/keys/info"
 
-# Managed Redis Database
-databases:
-  - name: redis-cache
-    engine: REDIS
-    cluster_name: astro-engine-redis
-    version: "7"
-    size: db-s-1vcpu-1gb  # 1GB RAM, 1 vCPU - $15/month
-    production: true
-
-# Static routes (optional - for future static file serving)
-# static_sites: []
-
-# Worker services (optional - for Celery in future)
-# workers: []
-
-# Jobs (optional - for scheduled tasks in future)
-# jobs: []
+      # Request Size Limits
+      - key: MAX_REQUEST_SIZE_MB
+        value: "1"
 
 # Ingress configuration
 ingress:

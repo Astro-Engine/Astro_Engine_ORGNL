@@ -370,7 +370,7 @@ def create_app():
                     'code': 'UNAUTHORIZED',
                     'error_code': 4001,
                     'message': 'Valid API key required. Include X-API-Key header in your request.',
-                    'documentation': 'https://github.com/Project-Corp-Astro/Astro_Engine#authentication'
+                    'documentation': 'https://github.com/Astro-Engine/Astro_Engine_ORGNL#authentication'
                 },
                 'status': 'error',
                 'request_id': g.request_id

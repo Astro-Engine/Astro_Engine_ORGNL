@@ -25,7 +25,7 @@ The deployment requires connecting your GitHub account to DigitalOcean.
 
 **Step 2: Select Repository**
 ```
-1. Select repository: Project-Corp-Astro/Astro_Engine
+1. Select repository: Astro-Engine/Astro_Engine_ORGNL
 2. Select branch: main
 3. Auto-deploy: ✅ Enable (deploys on git push)
 ```
@@ -112,7 +112,7 @@ Redis: 1GB ($15/month)
 Total: $20/month
 
 GitHub:
-  Repository: Project-Corp-Astro/Astro_Engine
+  Repository: Astro-Engine/Astro_Engine_ORGNL
   Branch: main
   Auto-deploy: Enabled
 

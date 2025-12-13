@@ -78,7 +78,7 @@ Astro_Engine/
 ssh root@YOUR_DROPLET_IP
 
 # Clone and deploy
-git clone https://github.com/Project-Corp-Astro/Astro_Engine.git
+git clone https://github.com/Astro-Engine/Astro_Engine_ORGNL.git
 cd Astro_Engine
 chmod +x deploy.sh
 ./deploy.sh

@@ -1988,7 +1988,7 @@ Optional (When Needed):
 **Transformation completed by:** Claude Code
 **Transformation dates:** October 25-28, 2025
 **Total commits:** 39
-**Repository:** https://github.com/Project-Corp-Astro/Astro_Engine
+**Repository:** https://github.com/Astro-Engine/Astro_Engine_ORGNL
 **Final commit:** ec8eaa3 (All 25 phases complete)
 
 ---
