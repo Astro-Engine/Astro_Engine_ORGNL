@@ -73,6 +73,12 @@ http://localhost:5000/lahiri/calculate_d40
 http://localhost:5000/lahiri/calculate_d45
 http://localhost:5000/lahiri/calculate_d60
 
+http://localhost:5000/lahiri/d6_shashtamsha
+http://localhost:5000/lahiri/d150-nadiamsha
+http://localhost:5000/lahiri/d40-chart
+
+
+
 http://localhost:5000/lahiri/calculate_arudha_lagna
 http://localhost:5000/lahiri/calculate_sripathi_bhava
 http://localhost:5000/lahiri/calculate_kp_bhava

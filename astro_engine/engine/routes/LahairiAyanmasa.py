@@ -9,6 +9,9 @@ import swisseph as swe
 from astro_engine.engine.dashas.DashaOneThreeYears import calculate_complete_dasha_report_one_year, filter_dasha_report_by_date_range_one_year
 from astro_engine.engine.dashas.DashaReportOne import  calculate_dasha_balance_daily_report, calculate_mahadasha_periods_daily_report,  calculate_moon_sidereal_position_daily_report,  date_str_to_jd_daily_report,  find_dasha_levels_at_date_daily_report,  get_julian_day_daily_report,   get_nakshatra_and_lord_daily_report
 from astro_engine.engine.dashas.DashaThreeSixReport import calculate_dasha_balance_three_months, calculate_mahadasha_periods_three_months, calculate_moon_sidereal_position_three_months, filter_mahadashas_three_months, get_julian_day_three_months, get_nakshatra_and_lord_three_months
+from astro_engine.engine.divisionalCharts.AsupInasupD40 import calculate_d40_chart
+from astro_engine.engine.divisionalCharts.NadiamshaD150 import calculate_d150_with_method
+from astro_engine.engine.divisionalCharts.ShashtamshaD6 import calculate_d6_chart
 from astro_engine.engine.doshas.AgarakDosha import calculate_ascendant, calculate_chart_data
 from astro_engine.engine.doshas.GuruChandalDosha import analyze_guru_chandal_dosha, calculate_chart
 from astro_engine.engine.doshas.PitraDosha import pitra_dosha_analyze_combinations, pitra_dosha_calculate_ascendant, pitra_dosha_calculate_planet_houses, pitra_dosha_calculate_planetary_positions, pitra_dosha_check_planetary_strength, pitra_dosha_format_dms, pitra_dosha_longitude_to_sign
@@ -25,6 +28,10 @@ from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MI
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
 from astro_engine.engine.remedies.VedicRemedies import calculate_birth_chart_remedies
 from astro_engine.engine.remedies.VedicYantras import FUNCTIONAL_NATURE,  yantra_calculate_birth_chart, yantra_calculate_shadbala, yantra_calculate_vimshottari_dasha, yantra_check_grahan_dosha, yantra_check_kaal_sarp_dosha, yantra_check_mangal_dosha, yantra_check_pitra_dosha, yantra_get_yantra_details, yantra_recommend_yantras
+from astro_engine.engine.vedicDashas.DwadashottariDasha import calculate_dwadashottari_dasha
+from astro_engine.engine.vedicDashas.ShodashottariDasha import calculate_shodashottari_dasha
+from astro_engine.engine.vedicDashas.TribhagiDasha import calculate_tribhagi_dasha
+from astro_engine.engine.vedicDashas.TribhagiDasha40 import calculate_tribhagi_dasha_40
 from astro_engine.engine.yogas.BudhaAdhityaYoga import YogaCombinationAnalyzer, analyze_budha_aditya_yoga_with_combinations, calculate_planetary_positions_budha_aditya
 from astro_engine.engine.yogas.ChandraMangalYoga import analyze_chandra_mangal_yoga_formation, analyze_individual_planet_permutation, calculate_planetary_positions_chandra_mangal, calculate_yoga_strength, generate_comprehensive_analysis, get_classical_dignity
 from astro_engine.engine.yogas.DaridraYoga import EnhancedDaridraYogaCalculator, compute_core_from_birth, daridraYoga
@@ -1837,6 +1844,85 @@ def lo_shu():
     return jsonify(result)
 
 
+
+
+
+
+# **********************************************************************************************************
+#           Rarely used used divisional charts in Vedic Astrology
+# **********************************************************************************************************
+
+#  D6 Shashtamsha chart
+@bp.route('/lahiri/d6_shashtamsha', methods=['POST'])
+def api_calculate_d6_chart():
+    """
+    Calculate D6 Shashtamsha chart - The Chart of Resistance
+    Shows: Health, Enemies, Debts, Obstacles, Fighting Spirit, Immunity
+    """
+    try:
+        data = request.json
+        
+        # Calculate using the imported function
+        response = calculate_d6_chart(data)
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 400
+
+
+#  D40 Asup.Inaups chart
+@bp.route('/lahiri/d40-chart', methods=['POST'])
+def api_calculate_d40_chart():
+    """Calculate D40 Khavedamsa chart"""
+    try:
+        data = request.json
+        
+        # Calculate using the imported function
+        response = calculate_d40_chart(data)
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+
+
+#    D150 Nadiamsha Chart 
+@bp.route('/lahiri/d150-nadiamsha', methods=['POST'])
+def api_calculate_d150_final():
+    """
+    Calculate D150 using the method specified by user
+    Add ?method=1 (or 2,3,4) to URL to choose calculation method
+    Default is method 1
+    """
+    try:
+        data = request.get_json()
+        method_num = int(request.args.get('method', 1))
+        
+        required_fields = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Calculate using the imported function
+        response = calculate_d150_with_method(data, method_num)
+        
+        return jsonify(response), 200
+        
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # **********************************************************************************************************
 #           Vimshottari Mahadasha and Antardashas
 # **********************************************************************************************************
@@ -2598,6 +2684,140 @@ def dasha_report_3years():
         return jsonify({"error": f"Invalid input: {str(ve)}"}), 400
     except Exception as e:
         return jsonify({"error": f"Calculation error: {str(e)}"}), 500
+
+
+
+
+
+# Tribhagi Dasha
+@bp.route('/lahiri/calculate_tribhagi_dasha', methods=['POST'])
+def api_calculate_tribhagi_dasha():
+    """
+    Flask API endpoint for Tribhagi Dasha calculation.
+    
+    Expected JSON Input:
+    {
+        "user_name": "string",
+        "birth_date": "YYYY-MM-DD",
+        "birth_time": "HH:MM:SS",
+        "latitude": float,
+        "longitude": float,
+        "timezone_offset": float (e.g., 5.5 for IST),
+        "num_cycles": int (optional, default: 2)
+    }
+    
+    Returns:
+        JSON response with complete Tribhagi Dasha calculations for both
+        Janma (standard) and Utpanna (variant) methods
+    """
+    try:
+        data = request.json
+        
+        # Calculate using the imported function
+        response = calculate_tribhagi_dasha(data)
+        
+        return jsonify(response)
+        
+    except KeyError as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Missing required field: {str(e)}'
+        }), 400
+        
+    except ValueError as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Invalid data format: {str(e)}'
+        }), 400
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Calculation error: {str(e)}'
+        }), 500
+
+
+#  Tribhagi Dasha 40 
+@bp.route('/lahiri/tribhagi-dasha-40', methods=['POST'])
+def tribhagi_dasha_endpoint():
+    """Main endpoint to calculate Tribhagi Dasha"""
+    try:
+        data = request.json
+        
+        # Validate required fields
+        required = ['birth_date', 'birth_time', 'latitude', 'longitude']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        # Get optional fields
+        name = data.get('name', 'User')
+        timezone_offset = float(data.get('timezone_offset', 5.5))
+        ayanamsa = data.get('ayanamsa', 'LAHIRI')
+        
+        # Calculate Tribhagi Dasha
+        result = calculate_tribhagi_dasha_40(
+            data['birth_date'],
+            data['birth_time'],
+            float(data['latitude']),
+            float(data['longitude']),
+            timezone_offset,
+            ayanamsa
+        )
+        
+        result['user_name'] = name
+        
+        return jsonify(result), 200
+        
+    except ValueError as e:
+        return jsonify({"error": str(e), "type": "validation_error"}), 400
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "type": "calculation_error",
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+# Shodashottari   Dasha
+
+@bp.route('/lahiri/shodashottari-dasha', methods=['POST'])
+def shodashottari_dasha_api():
+    """Main API endpoint for Shodashottari Dasha calculation"""
+    try:
+        data = request.get_json()
+        
+        # Calculate using the imported function
+        response = calculate_shodashottari_dasha(data)
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'traceback': traceback.format_exc()
+        }), 400
+
+
+#  Dwadashottari Dasha
+@bp.route('/lahiri/dwadashottari-dasha', methods=['POST'])
+def dwadashottari_dasha():
+    """Calculate COMPLETE Dwadashottari Dasha"""
+    try:
+        data = request.json
+        
+        # Calculate using the imported function
+        response = calculate_dwadashottari_dasha(data)
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "details": traceback.format_exc()
+        }), 400
 
 
 # Binnashtakavarga
