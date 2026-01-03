@@ -28,7 +28,13 @@ from astro_engine.engine.remedies.VedicGemstones import HOUSE_SIGNIFICATIONS, MI
 from astro_engine.engine.remedies.VedicMantras import analyze_chart_for_mantras, calculate_birth_chart, calculate_nakshatra, get_current_julian_day
 from astro_engine.engine.remedies.VedicRemedies import calculate_birth_chart_remedies
 from astro_engine.engine.remedies.VedicYantras import FUNCTIONAL_NATURE,  yantra_calculate_birth_chart, yantra_calculate_shadbala, yantra_calculate_vimshottari_dasha, yantra_check_grahan_dosha, yantra_check_kaal_sarp_dosha, yantra_check_mangal_dosha, yantra_check_pitra_dosha, yantra_get_yantra_details, yantra_recommend_yantras
+from astro_engine.engine.vedicDashas.ChaturshitisamaDasha import  calculate_chaturshitisama_swati_dasha
 from astro_engine.engine.vedicDashas.DwadashottariDasha import calculate_dwadashottari_dasha
+from astro_engine.engine.vedicDashas.DwisaptatisamaDasha import calculate_dwisaptati_dasha
+from astro_engine.engine.vedicDashas.PanchottariDasha import calculate_panchottari_dasha
+from astro_engine.engine.vedicDashas.SatabdikaDasha import calculate_satabdika_dasha
+from astro_engine.engine.vedicDashas.ShastihayaniDasha import calculate_shastihayani_dasha
+from astro_engine.engine.vedicDashas.ShattrimshatsamaDasha import calculate_Shattrimshatsama_dasha
 from astro_engine.engine.vedicDashas.ShodashottariDasha import calculate_shodashottari_dasha
 from astro_engine.engine.vedicDashas.TribhagiDasha import calculate_tribhagi_dasha
 from astro_engine.engine.vedicDashas.TribhagiDasha40 import calculate_tribhagi_dasha_40
@@ -2820,6 +2826,152 @@ def dwadashottari_dasha():
         }), 400
 
 
+
+#  Satabdika Dasha
+@bp.route('/lahiri/calculate_satabdika', methods=['POST'])
+def calculate_satabdika():
+    data = request.get_json()
+    try:
+        user_name = data.get('user_name')
+        dob = data.get('birth_date')
+        tob = data.get('birth_time')
+        lat = float(data.get('latitude'))
+        lon = float(data.get('longitude'))
+        tz = float(data.get('timezone_offset'))
+
+        # Call the calculation function from calculations module
+        result = calculate_satabdika_dasha(user_name, dob, tob, lat, lon, tz)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+
+# Chaturshitisama Dasha
+
+@bp.route('/lahiri/calculate_Chaturshitisama_dasha', methods=['POST'])
+def calculate_Chaturshitisama_dasha_final():
+    data = request.get_json()
+    try:
+        user_name = data.get("user_name")
+        dob_str = data.get("birth_date")
+        tob_str = data.get("birth_time")
+        lat = float(data.get("latitude"))
+        lon = float(data.get("longitude"))
+        tz = float(data.get("timezone_offset"))
+
+        # Call the calculation function from calculations module
+        result = calculate_chaturshitisama_swati_dasha(user_name, dob_str, tob_str, lat, lon, tz)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+# Shattrimshatsama  Dasha
+@bp.route('/lahiri/calculate_Shattrimshatsama_dasha', methods=['POST'])
+def calculate_Shattrimshatsama():
+    data = request.get_json()
+    try:
+        user_name = data.get('user_name', 'Native')
+        dob_str = data.get('birth_date')
+        tob_str = data.get('birth_time')
+        lat = float(data.get('latitude', 0))
+        lon = float(data.get('longitude', 0))
+        tz = float(data.get('timezone_offset', 5.5))
+
+        # Call the calculation function from calculations module
+        result = calculate_Shattrimshatsama_dasha(user_name, dob_str, tob_str, lat, lon, tz)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+#  Shastihayani Dasha
+
+@bp.route('/lahiri/calculate_shastihayani', methods=['POST'])
+def calculate_Shastihayani():
+    try:
+        data = request.json
+        user_name = data.get("user_name")
+        date_str = data.get("birth_date")
+        time_str = data.get("birth_time")
+        lat = float(data.get("latitude"))
+        lon = float(data.get("longitude"))
+        tz = float(data.get("timezone_offset"))
+        
+        # Call the calculation function from calculations module
+        result = calculate_shastihayani_dasha(user_name, date_str, time_str, lat, lon, tz)
+        
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#  Dwisaptatisama Dasha
+
+@bp.route('/lahiri/calculate_dwisaptati', methods=['POST'])
+def calculate_dwisaptati():
+    data = request.get_json()
+    
+    user_name = data.get("user_name")
+    dob_str = data.get("birth_date")
+    tob_str = data.get("birth_time")
+    lat = float(data.get("latitude"))
+    lon = float(data.get("longitude"))
+    tz = float(data.get("timezone_offset"))
+
+    try:
+        # Call the calculation function from calculations module
+        result = calculate_dwisaptati_dasha(user_name, dob_str, tob_str, lat, lon, tz)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+# Panchottari Dasha
+
+@bp.route('/lahiri/calculate-panchottari-dasha', methods=['POST'])
+def calculate_panchottari_dasha_endpoint():
+    """
+    Main API: Calculate Panchottari Dasha
+    """
+    try:
+        data = request.get_json()
+        user_name = data.get('user_name', 'User')
+        birth_date = data['birth_date']
+        birth_time = data['birth_time']
+        latitude = float(data['latitude'])
+        longitude = float(data['longitude'])
+        timezone_offset = float(data['timezone_offset'])
+        
+        # Call the calculation function from calculations module
+        result = calculate_panchottari_dasha(
+            user_name, birth_date, birth_time, 
+            latitude, longitude, timezone_offset
+        )
+        
+        return jsonify(result), 200
+        
+    except KeyError as e:
+        return jsonify({'error': f'Missing field: {str(e)}', 'message': 'Provide all birth details'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e), 'message': 'Error calculating Panchottari Dasha', 'type': type(e).__name__}), 500
+
+
+
+
 # Binnashtakavarga
 
 @bp.route('/lahiri/calculate_binnatakvarga', methods=['POST'])
@@ -2870,61 +3022,6 @@ def calculate_lahiri_binnashtakvarga():
 
 
 # #  Sarvathakavargha 
-# @bp.route('/lahiri/calculate_sarvashtakavarga', methods=['POST'])
-# def calculate_sarvashtakavarga_endpoint():
-#     """API endpoint to calculate Sarvashtakvarga with matrix table based on birth details."""
-#     try:
-#         data = request.get_json()
-#         if not data:
-#             return jsonify({"error": "No JSON data provided"}), 400
-
-#         required = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-#         if not all(key in data for key in required):
-#             return jsonify({"error": "Missing required parameters"}), 400
-
-#         user_name = data['user_name']
-#         birth_date = data['birth_date']
-#         birth_time = data['birth_time']
-#         latitude = float(data['latitude'])
-#         longitude = float(data['longitude'])
-#         tz_offset = float(data['timezone_offset'])
-
-#         if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
-#             return jsonify({"error": "Invalid latitude or longitude"}), 400
-
-#         # Call the calculation function
-#         results = lahiri_sarvathakavargha(birth_date, birth_time, latitude, longitude, tz_offset)
-
-#         # Construct JSON response
-#         response = {
-#             "user_name": user_name,
-#             "birth_details": {
-#                 "birth_date": birth_date,
-#                 "birth_time": birth_time,
-#                 "latitude": latitude,
-#                 "longitude": longitude,
-#                 "timezone_offset": tz_offset
-#             },
-#             "planetary_positions": results["planetary_positions"],
-#             "ascendant": results["ascendant"],
-#             "bhinnashtakavarga": results["bhinnashtakavarga"],
-#             "sarvashtakavarga": results["sarvashtakavarga"],
-#             "notes": {
-#                 "ayanamsa": "Lahiri",
-#                 "ayanamsa_value": f"{results['ayanamsa']:.6f}",
-#                 "chart_type": "Rasi",
-#                 "house_system": "Whole Sign"
-#             },
-#             "debug": {
-#                 "julian_day": results["julian_day"],
-#                 "ayanamsa": f"{results['ayanamsa']:.6f}"
-#             }
-#         }
-#         return jsonify(response), 200
-
-#     except Exception as e:
-#         logging.error(f"Error: {str(e)}")
-#         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 #  Sarvathakavargha 
 @bp.route('/lahiri/calculate_sarvashtakavarga', methods=['POST'])

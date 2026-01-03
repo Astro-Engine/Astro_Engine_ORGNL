@@ -100,6 +100,20 @@ http://localhost:5000/lahiri/calculate_maha_antar_pratyantar_dasha
 http://localhost:5000/lahiri/calculate_antar_pratyantar_sookshma_dasha
 http://localhost:5000/lahiri/calculate_sookshma_prana_dashas
 
+http://localhost:5000/lahiri/calculate_tribhagi_dasha
+http://localhost:5000/lahiri/lahiri/tribhagi-dasha-40
+http://localhost:5000/lahiri/shodashottari-dasha
+http://localhost:5000/lahiri/dwadashottari-dasha
+http://localhost:5000/lahiri/calculate_Chaturshitisama_dasha
+http://localhost:5000/lahiri/calculate_satabdika
+http://localhost:5000/lahiri/calculate-panchottari-dasha
+http://localhost:5000/lahiri/calculate_dwisaptati
+http://localhost:5000/lahiri/calculate_shastihayani
+http://localhost:5000/lahiri/calculate_Shattrimshatsama_dasha
+http://localhost:5000/lahiri/
+
+
+
 http://localhost:5000/lahiri/dasha_for_day
 http://localhost:5000/lahiri/dasha_for_week
 http://localhost:5000/lahiri/dasha_for_month
