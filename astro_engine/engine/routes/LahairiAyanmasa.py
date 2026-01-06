@@ -6,6 +6,7 @@ import logging
 # from venv import logger
 import swisseph as swe
 
+from astro_engine.engine.ashatakavargha.LahiriShadbala import ShadbalaCalculator
 from astro_engine.engine.dashas.DashaOneThreeYears import calculate_complete_dasha_report_one_year, filter_dasha_report_by_date_range_one_year
 from astro_engine.engine.dashas.DashaReportOne import  calculate_dasha_balance_daily_report, calculate_mahadasha_periods_daily_report,  calculate_moon_sidereal_position_daily_report,  date_str_to_jd_daily_report,  find_dasha_levels_at_date_daily_report,  get_julian_day_daily_report,   get_nakshatra_and_lord_daily_report
 from astro_engine.engine.dashas.DashaThreeSixReport import calculate_dasha_balance_three_months, calculate_mahadasha_periods_three_months, calculate_moon_sidereal_position_three_months, filter_mahadashas_three_months, get_julian_day_three_months, get_nakshatra_and_lord_three_months
@@ -3023,7 +3024,6 @@ def calculate_lahiri_binnashtakvarga():
 
 # #  Sarvathakavargha 
 
-#  Sarvathakavargha 
 @bp.route('/lahiri/calculate_sarvashtakavarga', methods=['POST'])
 def calculate_sarvashtakavarga_endpoint():
     """API endpoint to calculate Sarvashtakvarga with matrix table based on birth details."""
@@ -3134,6 +3134,60 @@ def shodasha_varga_summary():
 
 
 
+#  Shad bala APi
+
+@bp.route('/lahiri/calculate_shadbala', methods=['POST'])
+def calculate_shadbala():
+    """Main endpoint for Shadbala calculation"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['user_name', 'birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Validate data types
+        try:
+            float(data['latitude'])
+            float(data['longitude'])
+            float(data['timezone_offset'])
+        except ValueError:
+            return jsonify({'error': 'Latitude, longitude, and timezone_offset must be numbers'}), 400
+        
+        # Validate date format
+        try:
+            datetime.strptime(data['birth_date'], '%Y-%m-%d')
+        except ValueError:
+            return jsonify({'error': 'Birth date must be in YYYY-MM-DD format'}), 400
+        
+        # Validate time format
+        try:
+            time_parts = data['birth_time'].split(':')
+            if len(time_parts) < 2:
+                raise ValueError
+            int(time_parts[0])
+            int(time_parts[1])
+            if len(time_parts) > 2:
+                int(time_parts[2])
+        except ValueError:
+            return jsonify({'error': 'Birth time must be in HH:MM:SS or HH:MM format'}), 400
+        
+        # Ensure time has seconds
+        if len(data['birth_time'].split(':')) == 2:
+            data['birth_time'] += ':00'
+        
+        calculator = ShadbalaCalculator()
+        result = calculator.calculate_shadbala(data)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 
