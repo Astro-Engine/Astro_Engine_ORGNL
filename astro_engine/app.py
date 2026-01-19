@@ -21,6 +21,7 @@ try:
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
     from .engine.routes.WesternType import ws
+    from .engine.routes.Sri_Yukteswar_Ayanamsa import sy
 
     # Import performance enhancements
     # Use Redis-enabled cache manager if REDIS_URL is set, otherwise use stub
@@ -39,6 +40,7 @@ except ImportError:
     from .engine.routes.LahairiAyanmasa import bp
     from .engine.routes.RamanAyanmasa import rl
     from astro_engine.engine.routes.WesternType import ws
+    from .engine.routes.Sri_Yukteswar_Ayanamsa import sy
 
     # Import performance enhancements
     cache_enabled = os.getenv('CACHE_ENABLED', 'false').lower() == 'true'
@@ -310,6 +312,7 @@ def create_app():
     app.register_blueprint(bp)  # Lahiri Ayanamsa routes
     app.register_blueprint(rl)  # Raman Ayanamsa routes
     app.register_blueprint(ws)  # western Ayanamsa routes
+    app.register_blueprint(sy)  # Sri Yukteswar Ayanamsa routes
 
     # =============================================================================
     # PHASE 1, MODULE 1.2: AUTHENTICATION MIDDLEWARE

@@ -6,6 +6,7 @@ import logging
 # from venv import logger
 import swisseph as swe
 
+from astro_engine.engine.lagnaCharts.LahirigatikaLagna import gatika_lagna_calculations
 from astro_engine.engine.ashatakavargha.LahiriShadbala import  calculate_shadbala_advanced
 from astro_engine.engine.dashas.DashaOneThreeYears import calculate_complete_dasha_report_one_year, filter_dasha_report_by_date_range_one_year
 from astro_engine.engine.dashas.DashaReportOne import  calculate_dasha_balance_daily_report, calculate_mahadasha_periods_daily_report,  calculate_moon_sidereal_position_daily_report,  date_str_to_jd_daily_report,  find_dasha_levels_at_date_daily_report,  get_julian_day_daily_report,   get_nakshatra_and_lord_daily_report
@@ -1435,6 +1436,21 @@ def calculate_karkamsha_endpoint():
         return jsonify({"error": f"Invalid input format: {str(ve)}"}), 400
     except Exception as e:
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+
+#  Gatika Lagna Chart
+
+@bp.route('/lahiri/calculate_gl_chart', methods=['POST'])
+def calculate_gl_chart():
+    try:
+        data = request.json
+        # Call the logic from the external file
+        response = gatika_lagna_calculations(data)
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
