@@ -120,7 +120,7 @@ def natal_chart():
             "ascendant": ascendant_json,
             # "house_signs": house_signs_json,
             "notes": {
-                "ayanamsa": "Lahiri",
+                "ayanamsa": "Raman",
                 "ayanamsa_value": f"{chart_data['ayanamsa_value']:.6f}",
                 "chart_type": "Rasi",
                 "house_system": "Whole Sign"
@@ -1238,7 +1238,7 @@ def calculate_sarvashtakavarga_endpoint():
             "bhinnashtakavarga": results["bhinnashtakavarga"],
             "sarvashtakavarga": results["sarvashtakavarga"],
             "notes": {
-                "ayanamsa": "Lahiri",
+                "ayanamsa": "Raman",
                 "ayanamsa_value": f"{results['ayanamsa']:.6f}",
                 "chart_type": "Rasi",
                 "house_system": "Whole Sign"
