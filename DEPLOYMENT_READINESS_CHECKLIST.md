@@ -17,7 +17,7 @@
 ✅ Zero known critical bugs
 ✅ All security issues fixed
 ✅ Code committed to GitHub (39 commits)
-✅ Repository: https://github.com/Project-Corp-Astro/Astro_Engine
+✅ Repository: https://github.com/Astro-Engine/Astro_Engine_ORGNL
 ```
 
 ### **2. DEPENDENCIES**

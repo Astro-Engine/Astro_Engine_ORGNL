@@ -94,7 +94,7 @@ cd "/Users/gouthamk/APPS/Astro Engine/Astro_Engine"
 7. `10fa432` - Phase 3 Complete
 8. `780f820` - Critical Phases Summary
 
-**Repository:** https://github.com/Project-Corp-Astro/Astro_Engine
+**Repository:** https://github.com/Astro-Engine/Astro_Engine_ORGNL
 
 ---
 

@@ -376,7 +376,7 @@ READY FOR: ✅ PRODUCTION USE
 INTERNAL_TEAMS_INTEGRATION_GUIDE.md
 
 Location:
-https://github.com/Project-Corp-Astro/Astro_Engine/blob/main/INTERNAL_TEAMS_INTEGRATION_GUIDE.md
+https://github.com/Astro-Engine/Astro_Engine_ORGNL/blob/main/INTERNAL_TEAMS_INTEGRATION_GUIDE.md
 ```
 
 **What Teams Get:**

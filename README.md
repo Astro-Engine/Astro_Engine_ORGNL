@@ -936,7 +936,7 @@ graph TB
 #### One-Command Deployment
 ```bash
 # 🚀 Quick start with Docker
-git clone https://github.com/Project-Corp-Astro/Astro_Engine.git
+git clone https://github.com/Astro-Engine/Astro_Engine_ORGNL.git
 cd Astro_Engine
 docker-compose up --build -d
 
@@ -1632,7 +1632,7 @@ graph TB
 #### One-Command Deployment
 ```bash
 # 🚀 Quick start with Docker
-git clone https://github.com/Project-Corp-Astro/Astro_Engine.git
+git clone https://github.com/Astro-Engine/Astro_Engine_ORGNL.git
 cd Astro_Engine
 docker-compose up --build -d
 
@@ -3052,7 +3052,7 @@ sudo apt install docker-compose-plugin
 
 ```bash
 # 1️⃣ Clone the repository
-git clone https://github.com/Project-Corp-Astro/Astro_Engine.git
+git clone https://github.com/Astro-Engine/Astro_Engine_ORGNL.git
 cd Astro_Engine
 
 # 2️⃣ Create and activate virtual environment
@@ -3087,7 +3087,7 @@ python app.py
 
 ```bash
 # Clone with full history
-git clone https://github.com/Project-Corp-Astro/Astro_Engine.git
+git clone https://github.com/Astro-Engine/Astro_Engine_ORGNL.git
 cd Astro_Engine
 
 # Verify repository structure
