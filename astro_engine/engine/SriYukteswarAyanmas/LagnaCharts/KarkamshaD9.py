@@ -121,7 +121,8 @@ def find_atmakaraka(positions):
 
 def perform_karkamsha_calculation_d9(data):
     """
-    Main logic function. Replicates the logic flow of your original script exactly.
+    Main logic function used by the API.
+    Calculates D1 chart rotated to Karkamsha Lagna.
     """
     user_name = data.get('user_name', 'User')
     birth_date = data.get('birth_date')
@@ -185,16 +186,13 @@ def perform_karkamsha_calculation_d9(data):
     }
 
     # 5. Construct Final JSON
-    # IMPORTANT: 'ascendant' field now represents the CHART's Lagna (Karkamsha)
-    response_ascendant = {
-        "degrees": "0° 0' 0.00\"", # Karkamsha is a sign, not a point
-        "nakshatra": "",
-        "pada": 0,
-        "sign": karkamsha_sign
-    }
-
     response = {
-        "ascendant": response_ascendant,
+        "ascendant": {
+            "degrees": "0° 0' 0.00\"", # Karkamsha is a sign, not a point
+            "nakshatra": "",
+            "pada": 0,
+            "sign": karkamsha_sign
+        },
         "birth_details": {
             "birth_date": birth_date,
             "birth_time": birth_time,
