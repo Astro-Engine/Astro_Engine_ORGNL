@@ -6,6 +6,8 @@ import logging
 # from venv import logger
 import swisseph as swe
 
+from astro_engine.engine.ashatakavargha.LahiriPanchadhaMaitri import perform_panchadha_maitri_calculation_lahiri
+from astro_engine.engine.ashatakavargha.LahiriTatikaChakra import perform_maitri_calculation_lahiri
 from astro_engine.engine.lagnaCharts.LahirigatikaLagna import gatika_lagna_calculations
 from astro_engine.engine.ashatakavargha.LahiriShadbala import  calculate_shadbala_advanced
 from astro_engine.engine.dashas.DashaOneThreeYears import calculate_complete_dasha_report_one_year, filter_dasha_report_by_date_range_one_year
@@ -86,8 +88,8 @@ from astro_engine.engine.divisionalCharts.TrimshamshaD30 import lahiri_trimshams
 from astro_engine.engine.lagnaCharts.ArudhaLagna import lahairi_arudha_lagna
 from astro_engine.engine.lagnaCharts.EqualLagan import SIGNS,  lahairi_equal_bava
 from astro_engine.engine.lagnaCharts.KPLagna import  lahairi_kp_bava
-from astro_engine.engine.lagnaCharts.LahiriKarkamshaD1 import lahiri_karkamsha_d1
-from astro_engine.engine.lagnaCharts.LahiriKarkamshaD9 import lahiri_karkamsha_D9
+from astro_engine.engine.lagnaCharts.LahiriKarkamshaD1 import  perform_karkamsha_calculation
+from astro_engine.engine.lagnaCharts.LahiriKarkamshaD9 import  perform_karkamsha_calculation_d9
 from astro_engine.engine.lagnaCharts.Sripathi import calculate_ascendant_sri, get_nakshatra_pada_sri, get_planet_data_sri
 from astro_engine.engine.natalCharts.natal import lahairi_natal,  longitude_to_sign, format_dms
 from astro_engine.engine.natalCharts.transit import  lahairi_tranist
@@ -1362,8 +1364,8 @@ def calculate_arudha_lagna():
 
 # Karkamsha Birth chart 
 
-@bp.route('/lahiri/calculate_d1_karkamsha', methods=['POST'])
-def calculate_d1_karkamsha_endpoint():
+# @bp.route('/lahiri/calculate_d1_karkamsha', methods=['POST'])
+# def calculate_d1_karkamsha_endpoint():
     """Calculate the D1 Karkamsha chart based on birth details."""
     try:
         data = request.get_json()
@@ -1400,42 +1402,73 @@ def calculate_d1_karkamsha_endpoint():
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 
+@bp.route('/lahiri/calculate_d1_karkamsha', methods=['POST'])
+def calculate_d1_karkamsha_endpoint():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON"}), 400
+
+        # Pass data to calculation module
+        response = perform_karkamsha_calculation(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 #  KarKamsha D9 Chart 
-@bp.route('/lahiri/calculate_karkamsha_d9', methods=['POST'])
+# @bp.route('/lahiri/calculate_karkamsha_d9', methods=['POST'])
+# def calculate_karkamsha_endpoint():
+#     """API endpoint to calculate the Karkamsha chart."""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({"error": "No JSON data provided"}), 400
+
+#         required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
+#         if not all(field in data for field in required_fields):
+#             return jsonify({"error": "Missing required fields"}), 400
+
+#         user_name = data.get('user_name', 'Unknown')
+#         birth_date = data['birth_date']
+#         birth_time = data['birth_time']
+#         latitude = float(data['latitude'])
+#         longitude = float(data['longitude'])
+#         tz_offset = float(data['timezone_offset'])
+
+#         # Call the calculation function
+#         results = lahiri_karkamsha_D9(birth_date, birth_time, latitude, longitude, tz_offset)
+
+#         # Construct response
+#         response = {
+#             "user_name": user_name,
+#             "atmakaraka": results['atmakaraka'],
+#             "karkamsha_sign": results['karkamsha_sign'],
+#             "karkamsha_chart": results['karkamsha_chart']
+#         }
+#         return jsonify(response), 200
+
+#     except ValueError as ve:
+#         return jsonify({"error": f"Invalid input format: {str(ve)}"}), 400
+#     except Exception as e:
+#         return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+@bp.route('/calculate_karkamsha_d9', methods=['POST'])
 def calculate_karkamsha_endpoint():
-    """API endpoint to calculate the Karkamsha chart."""
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON data provided"}), 400
 
-        required_fields = ['birth_date', 'birth_time', 'latitude', 'longitude', 'timezone_offset']
-        if not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields"}), 400
+        # Pass data to calculation module
+        result = perform_karkamsha_calculation_d9(data)
+        
+        return jsonify(result), 200
 
-        user_name = data.get('user_name', 'Unknown')
-        birth_date = data['birth_date']
-        birth_time = data['birth_time']
-        latitude = float(data['latitude'])
-        longitude = float(data['longitude'])
-        tz_offset = float(data['timezone_offset'])
-
-        # Call the calculation function
-        results = lahiri_karkamsha_D9(birth_date, birth_time, latitude, longitude, tz_offset)
-
-        # Construct response
-        response = {
-            "user_name": user_name,
-            "atmakaraka": results['atmakaraka'],
-            "karkamsha_sign": results['karkamsha_sign'],
-            "karkamsha_chart": results['karkamsha_chart']
-        }
-        return jsonify(response), 200
-
-    except ValueError as ve:
-        return jsonify({"error": f"Invalid input format: {str(ve)}"}), 400
     except Exception as e:
-        return jsonify({"error": f"Server error: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -1867,6 +1900,39 @@ def lo_shu():
     return jsonify(result)
 
 
+
+#  Tatkalik Maitri Chakra (Temporal Relationship)
+@bp.route('/lahiri/calculate_maitri', methods=['POST'])
+def calculate_maitri_lahiri():
+    try:
+        # Get JSON data
+        data = request.json
+        
+        # Pass data to calculation module
+        response = perform_maitri_calculation_lahiri(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "type": type(e).__name__}), 500
+
+
+# Panchadha Maitri Chakra (Compound Relationship)
+@bp.route('/lahiri/calculate_panchadha_maitri', methods=['POST'])
+def calculate_panchadha_maitri_lahiri():
+    try:
+        # Parse Input Data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        # Perform Calculation
+        response = perform_panchadha_maitri_calculation_lahiri(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
