@@ -6,8 +6,23 @@ import logging
 # from venv import logger
 import swisseph as swe
 
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.AntarDasha import maha_antar_dasha_cal
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.AshtottariAntarDasha import perform_ashtottari_antar_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.AshtottariPratyantardashas import ashtottari_pratyantardashas_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.DwadashottariDasha import perform_dwadashottari_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.DwisaptatisamaDasha import perform_Dwisaptatisama_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.PanchottariDasha import perform_panchottari_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.PrannaDasha import perform_dasha_calculation_pranna
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.PratyantardashasDasha import calcu_praPratyantardashas_yuktewar
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.SatabdikaDasha import perform_satabdika_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.ShastihayaniDasha import perform_shastihayani_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.ShattrimshatsamaDasha import perform_shattrimshatsama_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.ShodashottariDasha import shodashottari_dasha_calculation
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.SookshmaDasha import sookshma_dasha_data_cal
+from astro_engine.engine.SriYukteswarAyanmas.Dashas.TribhagiDasha import tribhgi_dasha_calculation
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.ArudhaLagna import perform_arudha_calculation
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.BhavaLagna import perform_bhava_lagna_calculation
+from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.Binnastakavargha import perform_ashtakvarga_calculation_binna
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.EqualBhava import equal_bhava_chart
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.GatikaLagna import perform_gl_calculation
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.HoraLagna import perform_hora_calculation
@@ -15,6 +30,7 @@ from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.KPBhava import perform_
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.KarakamshaBirth import calculate_karakamsha_chart
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.KarkamshaD9 import perform_karkamsha_calculation_d9
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.MoonChart import perform_moon_chart_calculation
+from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.Sarvashtakvarga import  perform_sarvashtakavarga_calculation_cal
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.SripatiBhava import perform_astrology_calculation_sripathi
 from astro_engine.engine.SriYukteswarAyanmas.LagnaCharts.SunChart import perform_sun_chart_calculation
 from astro_engine.engine.SriYukteswarAyanmas.ShodashaVarghaCharts.D10Dashamsha import perform_d10_calculation
@@ -313,6 +329,11 @@ def calculate_d60_chart():
 
 
 
+# **********************************************************************************************************
+#                Sri Yukteswar Ayanamsa - Lagna Charts Routes   
+# **********************************************************************************************************
+
+
 
 #  Sunya Lagna (Sun Chart) Calculation
 @sy.route('/yukteswar/calculate_sun_chart', methods=['POST'])
@@ -507,5 +528,340 @@ def calculate_gl_chart():
 
 
 
+
+# *****************************************************************************************************************
+#                Sri Yukteswar Ayanamsa - Ashtakvarga Charts Routes
+# *****************************************************************************************************************
+
+
+# Binnastana Calculation Logic (Used by multiple charts)
+@sy.route('/yukteswar/calculate_binnashtakvarga_chart', methods=['POST'])
+def calculate_binnashtakvarga_cal():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        # Pass data to calculation module
+        response = perform_ashtakvarga_calculation_binna(data)
+        
+        return jsonify(response), 200
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+# Sarvashtakvarga Calculation Logic (Used by multiple charts)
+@sy.route('/yukteswar/calculate_sarvashtakvarga_chart', methods=['POST'])
+def calculate_sarvashtakvarga_cal():
+    """API endpoint to calculate Sarvashtakvarga with matrix table based on birth details."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        # Pass data to calculation module
+        response = perform_sarvashtakavarga_calculation_cal(data)
+        
+        return jsonify(response), 200
+
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        logging.error(f"Error: {str(e)}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+
+# **********************************************************************************************************
+#  Vimshottari Dasa Calculation Route for Sri Yukteswar Ayanamsa
+# **********************************************************************************************************
+
+
+# Anatara Dasa Calculation Route
+@sy.route('/yukteswar/calculate_mahaantar_dasha', methods=['POST'])
+def calculate_chart_antar_dasha():
+    try:
+        data = request.json
+        
+        # Extract inputs from request
+        name = data.get('user_name')
+        b_date = data.get('birth_date')
+        b_time = data.get('birth_time')
+        lat = float(data.get('latitude'))
+        lon = float(data.get('longitude'))
+        tz = float(data.get('timezone_offset'))
+        
+        # Pass inputs to the calculation engine
+        response_data = maha_antar_dasha_cal(name, b_date, b_time, lat, lon, tz)
+        
+        # Return the result
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Pratyantardashas Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_pratyantar_dasha', methods=['POST'])
+def calculate_Pratyantardashas_cal():
+    try:
+        data = request.json
+        
+        # Extract inputs
+        user_name = data.get("user_name")
+        lat = float(data.get("latitude"))
+        lon = float(data.get("longitude"))
+        tz_offset = float(data.get("timezone_offset"))
+        date_str = data.get("birth_date")
+        time_str = data.get("birth_time")
+        
+        # Call the separated engine
+        response_data = calcu_praPratyantardashas_yuktewar(
+            user_name, lat, lon, tz_offset, date_str, time_str
+        )
+        
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Sookshma Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_sookshma_dasha', methods=['POST'])
+def calculate_sookshma_dasha():
+    try:
+        data = request.json
+        
+        # Extract inputs
+        user_name = data.get("user_name")
+        lat = float(data.get("latitude"))
+        lon = float(data.get("longitude"))
+        tz_offset = float(data.get("timezone_offset"))
+        
+        date_str = data.get("birth_date")
+        time_str = data.get("birth_time")
+        
+        # Call the separated engine
+        # Now calls the function that includes Sookshma dasha logic
+        response_data = sookshma_dasha_data_cal(
+            user_name, lat, lon, tz_offset, date_str, time_str
+        )
+        
+        return jsonify(response_data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Prana dasha Calculation Logic
+@sy.route('/yukteswar/calculate_prana_dasha', methods=['POST'])
+def calculate_prana_dasha():
+    try:
+        # Get JSON data
+        data = request.json
+        
+        # Pass data to calculation module
+        response = perform_dasha_calculation_pranna(data)
+        
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+#  Ashtottari antar dasha calculation logic
+@sy.route('/yukteswar/calculate_ashtottari_antar', methods=['POST'])
+def calculate_ashtottari_antar():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON"}), 400
+
+        # Pass data to calculation module
+        response = perform_ashtottari_antar_calculation(data)
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Ashtottari pratyantardasha calculation logic
+@sy.route('/yukteswar/calculate_ashtottari_pratyantardasha', methods=['POST'])
+def calculate_ashtottari_pratyantardashas():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON"}), 400
+
+        # Pass data to calculation module
+        response = ashtottari_pratyantardashas_calculation(data)
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+# Tribhgina Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_tribhgi_dasha', methods=['POST'])
+def calculate_tribhgi_dasha():
+    try:
+        # Get JSON data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = tribhgi_dasha_calculation(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        # Return exact python error for debugging
+        return jsonify({"error": str(e)}), 500
+
+
+
+#  Shodashottari Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_shodashottari_dasha', methods=['POST'])
+def calculate_shodashottari_dasha():
+    try:
+        data = request.json
+        
+        # Pass data to calculation module
+        response = shodashottari_dasha_calculation(data)
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        # It's good practice to print the error to server logs for debugging
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+#  Dwadashottari Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_dwadashottari', methods=['POST'])
+def calculate_dwadashottari_dasha():
+    try:
+        # Get JSON data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = perform_dwadashottari_calculation(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        # Return error details for debugging
+        return jsonify({"error": str(e)}), 500
+
+
+# Dwisaptatisama Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_dwisaptatisama', methods=['POST'])
+def calculate_dwisaptatisama():
+    try:
+        # Get JSON data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = perform_Dwisaptatisama_calculation(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        # Return exact python error for debugging
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# Shastihayani Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_shastihayani', methods=['POST'])
+def calculate_shastihayani():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = perform_shastihayani_calculation(data)
+        
+        return jsonify(response)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+#  Shattrimshatsama Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_shattrimshatsama', methods=['POST'])
+def calculate_dasha_shattrimshatsama():
+    try:
+        # Get JSON data
+        data = request.json
+        
+        # Pass data to calculation module
+        response = perform_shattrimshatsama_calculation(data)
+        
+        return jsonify(response)
+
+    except Exception as e:
+        import traceback
+        return jsonify({"status": "error", "message": str(e), "trace": traceback.format_exc()}), 500
+
+
+# Panchottari Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_panchottari', methods=['POST'])
+def calculate_panchottari_dasha():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = perform_panchottari_calculation(data)
+        
+        return jsonify(response), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+
+# Satabdika Dasha Calculation Logic
+@sy.route('/yukteswar/calculate_satabdika', methods=['POST'])
+def calculate_satabdika_dasha():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        # Pass data to calculation module
+        response = perform_satabdika_calculation(data)
+        
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
